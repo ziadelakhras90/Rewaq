@@ -1,0 +1,99 @@
+Continue from the attached project zip, do not start from scratch.
+
+Project name: رواق
+
+The attached project is the latest approved source of truth.
+Do not redesign architecture.
+Do not rewrite completed parts.
+Do not start Home page.
+Do not add features outside the MVP.
+
+Already completed:
+- Supabase foundation + migrations + RLS + edge functions
+- Catalog pages
+- Product details pages
+- Cart + Checkout + Success
+- Customer account pages
+- Seller onboarding + seller workspace foundations
+- Project docs and QA/setup files
+
+Your task now:
+Build **Phase 8 — Admin Moderation Pages** only.
+
+Create these routes:
+- app/(admin)/admin/page.tsx
+- app/(admin)/admin/seller-applications/page.tsx
+- app/(admin)/admin/sellers/page.tsx
+- app/(admin)/admin/orders/page.tsx
+- app/(admin)/admin/orders/[orderNumber]/page.tsx
+- app/(admin)/admin/categories/page.tsx
+
+Create/update only necessary files:
+- components/admin/*
+- services/admin.service.ts
+- any small route/auth/type fixes strictly required for this phase
+
+Requirements:
+
+## Admin dashboard
+Show:
+- total sellers
+- pending seller applications
+- total products
+- total orders
+- recent seller applications
+- recent orders
+
+## Seller applications page
+- list pending / approved / rejected applications
+- view store/application details
+- approve seller
+- reject seller
+- use the existing backend flow already in the project
+- do not create a new approval architecture
+
+## Sellers page
+- list all sellers/stores
+- show status
+- basic filtering
+- basic view only
+- no heavy analytics
+
+## Orders page
+- list all orders
+- basic filters:
+  - status
+  - store
+  - date
+- view order details
+
+## Order details page
+- show order snapshots
+- customer info snapshot
+- shipping snapshot
+- items snapshot
+- status history
+
+## Categories page
+- basic CRUD only
+- create category
+- edit category
+- archive/disable category if that matches current schema better
+- keep it minimal
+
+Rules:
+- Arabic RTL UI
+- practical MVP implementation
+- reuse existing services/patterns where possible
+- no overengineering
+- no new migrations unless absolutely required
+- no pseudo code
+- no TODO placeholders unless absolutely necessary
+
+Reply only with:
+1. Current audit
+2. Gap analysis
+3. Files created/updated
+4. Brief notes
+5. File tree
+6. Testing checklist

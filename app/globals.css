@@ -1,0 +1,77 @@
+/* app/globals.css */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   خط عربي — Noto Sans Arabic من Google Fonts
+   يُضاف عبر next/font داخل layout.tsx
+   هذا الملف يُعرّف المتغيرات المشتركة فقط
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@layer base {
+  :root {
+    --font-sans: 'Noto Sans Arabic', 'Cairo', 'Tajawal', system-ui, sans-serif;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    tab-size: 4;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    /* اللون الافتراضي متوافق مع stone-700 المستخدم في المشروع */
+    color: rgb(68, 64, 60);
+    background-color: rgb(250, 250, 249);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* RTL global */
+  html[dir='rtl'],
+  [dir='rtl'] {
+    text-align: right;
+  }
+
+  /* مسح الـ outline الافتراضي واستبداله بـ ring من Tailwind */
+  :focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+
+  /* لإزالة arrows من number inputs */
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer utilities {
+  /* Utility: صورة كاملة الغطاء */
+  .img-cover {
+    @apply h-full w-full object-cover;
+  }
+
+  /* Utility: إخفاء scrollbar مع الإبقاء على الـ scroll */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
