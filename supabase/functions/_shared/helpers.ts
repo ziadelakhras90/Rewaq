@@ -3,7 +3,7 @@
 // مشترك بين كل Edge Functions — لا يُستورد في Next.js
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Supabase admin client (service_role) — يُنشأ مرة واحدة لكل invocation
