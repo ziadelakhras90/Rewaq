@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // app/(admin)/admin/orders/[orderNumber]/page.tsx
 // تفاصيل طلب — admin view كاملة بدون قيود customer_id
 

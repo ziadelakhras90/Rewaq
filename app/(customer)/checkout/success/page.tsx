@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // app/(customer)/checkout/success/page.tsx
 // يُعرض بعد نجاح create-order
 // يقرأ orderNumber من searchParams

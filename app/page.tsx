@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // app/page.tsx
 // الصفحة الرئيسية لـ رِواق
 // Server Component — يجلب البيانات ويُمرّرها لأقسام الصفحة

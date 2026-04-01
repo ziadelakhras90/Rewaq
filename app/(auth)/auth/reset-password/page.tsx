@@ -30,7 +30,7 @@ export default function ResetPasswordPage() {
     setError(null)
 
     if (password.length < 8)      { setError('كلمة المرور يجب أن تكون 8 أحرف على الأقل'); return }
-    if (password !== confirmPass) { setError('كلمتا المرور غير متطابقتين'); return }
+    if (password !== confirmPass)  { setError('كلمتا المرور غير متطابقتين'); return }
 
     setLoading(true)
     try {
@@ -57,6 +57,7 @@ export default function ResetPasswordPage() {
     }
   }
 
+  // ── حالة النجاح ───────────────────────────────────────────────────────────
   if (success) {
     return (
       <div dir="rtl" className="flex min-h-screen items-center justify-center bg-stone-50 px-4">
@@ -85,9 +86,12 @@ export default function ResetPasswordPage() {
     )
   }
 
+  // ── النموذج ────────────────────────────────────────────────────────────────
   return (
     <div dir="rtl" className="flex min-h-screen items-center justify-center bg-stone-50 px-4">
       <div className="w-full max-w-md">
+
+        {/* ── Brand ──────────────────────────────────────────────────── */}
         <div className="mb-8 text-center">
           <Link href="/" className="text-2xl font-bold text-stone-900 hover:text-amber-600 transition">
             رِواق
@@ -96,8 +100,10 @@ export default function ResetPasswordPage() {
           <p className="mt-1 text-sm text-stone-500">اختر كلمة مرور قوية لحسابك</p>
         </div>
 
+        {/* ── Card ───────────────────────────────────────────────────── */}
         <div className="rounded-2xl border border-stone-200 bg-white px-6 py-8 shadow-sm">
           <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+
             <AuthInput
               label="كلمة المرور الجديدة"
               name="password"
@@ -158,23 +164,25 @@ export default function ResetPasswordPage() {
               {loading && <Spinner />}
               {loading ? 'جاري الحفظ…' : 'حفظ كلمة المرور الجديدة'}
             </button>
+
           </form>
         </div>
+
       </div>
     </div>
   )
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Icons
+// ─────────────────────────────────────────────────────────────────────────────
+
 function Eye() {
   return (
     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-      />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
     </svg>
   )
 }
@@ -182,12 +190,8 @@ function Eye() {
 function EyeOff() {
   return (
     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M13.875 18.825A10.05 10.05 0 0 1 12 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 0 1 4.352-5.411M9.88 9.88a3 3 0 1 0 4.243 4.243M3 3l18 18"
-      />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M13.875 18.825A10.05 10.05 0 0 1 12 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 0 1 4.352-5.411M9.88 9.88a3 3 0 1 0 4.243 4.243M3 3l18 18" />
     </svg>
   )
 }

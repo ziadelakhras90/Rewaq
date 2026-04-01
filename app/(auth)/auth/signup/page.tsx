@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // app/(auth)/auth/signup/page.tsx
 // Server Component
 

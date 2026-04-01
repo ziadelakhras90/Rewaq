@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // app/(admin)/admin/page.tsx
 // Admin Dashboard — الإحصائيات + آخر الطلبات + آخر الطلبات
 

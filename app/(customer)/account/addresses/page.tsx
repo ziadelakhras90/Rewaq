@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // app/(customer)/account/addresses/page.tsx
 // Server Component — يجلب العناوين ويمرّرها لـ AddressList
 

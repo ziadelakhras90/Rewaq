@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // app/(customer)/account/orders/page.tsx
 // Server Component — يجلب طلبات العميل
 

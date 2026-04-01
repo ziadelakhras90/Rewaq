@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // app/(public)/product/[slug]/page.tsx
 // Server Component — يجلب المنتج بالـ slug ويمرّره للـ client components
 

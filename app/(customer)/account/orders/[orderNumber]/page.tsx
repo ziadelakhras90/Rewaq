@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // app/(customer)/account/orders/[orderNumber]/page.tsx
 // Server Component — تفاصيل طلب واحد
 

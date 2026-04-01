@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // app/(public)/marketplace/page.tsx
 // Server Component — يقرأ searchParams ويمرّرها لـ CatalogPage
 

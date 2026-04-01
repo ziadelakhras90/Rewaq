@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // app/(customer)/checkout/page.tsx
 // Server Component — يجلب السلة والعناوين ثم يمرّرها للـ CheckoutForm
 

@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // app/(auth)/auth/login/page.tsx
 // Server Component — يقرأ searchParams ويمرّرها للـ LoginForm
 

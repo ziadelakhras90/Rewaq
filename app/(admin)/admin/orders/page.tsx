@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // app/(admin)/admin/orders/page.tsx
 
 import type { Metadata }       from 'next'
