@@ -16,23 +16,26 @@ export function LoginForm({ redirectTo = '/', errorParam, confirmedParam }: Logi
   const router = useRouter()
   const supabase = createClient()
 
+  const initialError =
+    errorParam === 'invalid_reset_link'
+      ? 'رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد.'
+      : errorParam === 'invalid_confirmation_link'
+        ? 'رابط تأكيد البريد الإلكتروني غير صالح أو منتهي الصلاحية. يرجى إعادة إرسال رابط التأكيد.'
+        : null
+
+  const initialSuccess = confirmedParam === '1' ? 'تم تأكيد البريد الإلكتروني بنجاح. يمكنك الآن تسجيل الدخول.' : null
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(
-    errorParam === 'invalid_link'
-      ? 'رابط التحقق أو إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية. يرجى المحاولة مجددًا.'
-      : null
-  )
-
-  const successMessage = confirmedParam === '1'
-    ? 'تم تأكيد بريدك الإلكتروني بنجاح. يمكنك الآن تسجيل الدخول.'
-    : null
+  const [error, setError] = useState<string | null>(initialError)
+  const [success, setSuccess] = useState<string | null>(initialSuccess)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    setSuccess(null)
 
     if (!email.trim()) { setError('البريد الإلكتروني مطلوب'); return }
     if (!password.trim()) { setError('كلمة المرور مطلوبة'); return }
@@ -66,12 +69,6 @@ export function LoginForm({ redirectTo = '/', errorParam, confirmedParam }: Logi
 
   return (
     <form onSubmit={handleSubmit} dir="rtl" className="space-y-5" noValidate>
-      {successMessage ? (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-          <p className="text-sm text-emerald-700">{successMessage}</p>
-        </div>
-      ) : null}
-
       <AuthInput
         label="البريد الإلكتروني"
         name="email"
@@ -114,6 +111,12 @@ export function LoginForm({ redirectTo = '/', errorParam, confirmedParam }: Logi
           نسيت كلمة المرور؟
         </Link>
       </div>
+
+      {success && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+          <p className="text-sm text-emerald-700">{success}</p>
+        </div>
+      )}
 
       {error && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">

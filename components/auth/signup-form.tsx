@@ -10,14 +10,6 @@ interface SignupFormProps {
   redirectTo?: string
 }
 
-function buildSignupConfirmationRedirect() {
-  const origin = typeof window !== 'undefined'
-    ? window.location.origin
-    : process.env.NEXT_PUBLIC_APP_URL ?? ''
-
-  return `${origin}/auth/callback?next=${encodeURIComponent('/auth/login?confirmed=1')}`
-}
-
 export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
   const router = useRouter()
   const supabase = createClient()
@@ -28,15 +20,15 @@ export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
   const [confirmPass, setConfirmPass] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [resending, setResending] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [info, setInfo] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [resending, setResending] = useState(false)
+  const [resendMessage, setResendMessage] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    setInfo(null)
+    setResendMessage(null)
 
     if (!fullName.trim()) { setError('الاسم الكامل مطلوب'); return }
     if (!email.trim()) { setError('البريد الإلكتروني مطلوب'); return }
@@ -45,11 +37,17 @@ export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
 
     setLoading(true)
     try {
+      const origin = typeof window !== 'undefined'
+        ? window.location.origin
+        : process.env.NEXT_PUBLIC_APP_URL ?? ''
+
+      const emailRedirectTo = `${origin}/auth/callback?next=/auth/login?confirmed=1`
+
       const { data, error: authError } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
         options: {
-          emailRedirectTo: buildSignupConfirmationRedirect(),
+          emailRedirectTo,
           data: {
             full_name: fullName.trim(),
           },
@@ -79,18 +77,25 @@ export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
   }
 
   async function handleResendConfirmation() {
-    if (!email.trim()) return
-
     setError(null)
-    setInfo(null)
-    setResending(true)
+    setResendMessage(null)
 
+    if (!email.trim()) {
+      setError('البريد الإلكتروني مطلوب')
+      return
+    }
+
+    setResending(true)
     try {
+      const origin = typeof window !== 'undefined'
+        ? window.location.origin
+        : process.env.NEXT_PUBLIC_APP_URL ?? ''
+
       const { error: resendError } = await supabase.auth.resend({
         type: 'signup',
         email: email.trim().toLowerCase(),
         options: {
-          emailRedirectTo: buildSignupConfirmationRedirect(),
+          emailRedirectTo: `${origin}/auth/callback?next=/auth/login?confirmed=1`,
         },
       })
 
@@ -99,9 +104,9 @@ export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
         return
       }
 
-      setInfo('أعدنا إرسال رابط التأكيد. تحقق من صندوق الوارد والبريد غير المرغوب فيه.')
+      setResendMessage('أعدنا إرسال رابط التأكيد. تحقق من بريدك الإلكتروني.')
     } catch {
-      setError('تعذّر إعادة إرسال رسالة التأكيد. حاول مجددًا بعد قليل.')
+      setError('تعذّر الاتصال. تحقق من اتصالك وحاول مجددًا.')
     } finally {
       setResending(false)
     }
@@ -122,28 +127,25 @@ export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
             <span className="font-medium text-stone-700">{email}</span>.
             افتح الرابط لتفعيل حسابك ثم سجّل الدخول.
           </p>
-          <p className="mt-2 text-xs text-stone-400">
-            لم تصلك الرسالة؟ تحقق من البريد غير المرغوب فيه أو أعد الإرسال من الزر أدناه.
-          </p>
         </div>
 
-        {info ? (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            {info}
+        {resendMessage && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <p className="text-sm text-emerald-700">{resendMessage}</p>
           </div>
-        ) : null}
+        )}
 
-        {error ? (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            {error}
+        {error && (
+          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+            <p className="text-sm text-rose-700">{error}</p>
           </div>
-        ) : null}
+        )}
 
         <button
           type="button"
           onClick={handleResendConfirmation}
           disabled={resending}
-          className="w-full rounded-xl border border-amber-200 px-4 py-3 text-sm font-bold text-amber-700 transition hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-xl border border-stone-200 bg-white py-3 text-sm font-bold text-stone-700 hover:bg-stone-50 transition disabled:cursor-not-allowed disabled:opacity-50"
         >
           {resending ? 'جاري إعادة الإرسال…' : 'إعادة إرسال رابط التأكيد'}
         </button>

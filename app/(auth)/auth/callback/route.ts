@@ -1,33 +1,23 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import type { EmailOtpType } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const ALLOWED_OTP_TYPES = [
-  'signup',
-  'invite',
-  'magiclink',
-  'recovery',
-  'email_change',
-  'email',
-] as const
-
-function sanitizeNext(next: string | null, fallback: string): string {
-  if (!next) return fallback
-  return next.startsWith('/') ? next : fallback
+function normalizeNext(next: string | null, fallback: string) {
+  if (!next || !next.startsWith('/')) return fallback
+  return next
 }
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url)
+  const url = new URL(request.url)
+  const { searchParams, origin } = url
+
   const code = searchParams.get('code')
   const tokenHash = searchParams.get('token_hash')
-  const typeParam = searchParams.get('type')
+  const type = searchParams.get('type')
 
-  const defaultNext = typeParam === 'recovery'
-    ? '/auth/reset-password'
-    : '/auth/login?confirmed=1'
+  const defaultNext = type === 'recovery' ? '/auth/reset-password' : '/auth/login?confirmed=1'
+  const next = normalizeNext(searchParams.get('next'), defaultNext)
 
-  const next = sanitizeNext(searchParams.get('next'), defaultNext)
   const cookieStore = await cookies()
 
   const supabase = createServerClient(
@@ -42,14 +32,14 @@ export async function GET(request: NextRequest) {
           try {
             cookieStore.set({ name, value, ...options })
           } catch {
-            // ignored in server contexts that disallow mutating cookies
+            // ignored in route handler edge cases
           }
         },
         remove(name: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value: '', ...options })
           } catch {
-            // ignored in server contexts that disallow mutating cookies
+            // ignored in route handler edge cases
           }
         },
       },
@@ -64,16 +54,24 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  if (tokenHash && typeParam && ALLOWED_OTP_TYPES.includes(typeParam as (typeof ALLOWED_OTP_TYPES)[number])) {
-    const { error } = await supabase.auth.verifyOtp({
-      token_hash: tokenHash,
-      type: typeParam as EmailOtpType,
-    })
+  if (tokenHash && type) {
+    const verifyType = type === 'signup' ? 'signup' : type === 'recovery' ? 'recovery' : null
 
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
+    if (verifyType) {
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: verifyType,
+      })
+
+      if (!error) {
+        return NextResponse.redirect(`${origin}${next}`)
+      }
     }
   }
 
-  return NextResponse.redirect(`${origin}/auth/login?error=invalid_link`)
+  const invalidTarget = type === 'recovery'
+    ? '/auth/login?error=invalid_reset_link'
+    : '/auth/login?error=invalid_confirmation_link'
+
+  return NextResponse.redirect(`${origin}${invalidTarget}`)
 }

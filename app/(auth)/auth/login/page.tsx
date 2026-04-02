@@ -19,7 +19,10 @@ interface PageProps {
 export default async function LoginPage({ searchParams }: PageProps) {
   const { redirect, error, confirmed } = await searchParams
 
-  const redirectTo = redirect?.startsWith('/') ? redirect : '/'
+  const rawRedirect = redirect
+  const redirectTo = rawRedirect?.startsWith('/') ? rawRedirect : '/'
+  const errorParam = error
+  const confirmedParam = confirmed === '1' ? '1' : undefined
 
   return (
     <div dir="rtl" className="flex min-h-screen items-center justify-center bg-stone-50 px-4">
@@ -33,11 +36,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
         </div>
 
         <div className="rounded-2xl border border-stone-200 bg-white px-6 py-8 shadow-sm">
-          <LoginForm
-            redirectTo={redirectTo}
-            errorParam={error}
-            confirmedParam={confirmed}
-          />
+          <LoginForm redirectTo={redirectTo} errorParam={errorParam} confirmedParam={confirmedParam} />
         </div>
 
         <p className="mt-6 text-center text-xs text-stone-400">
