@@ -1,41 +1,46 @@
 'use client'
 
-// components/auth/login-form.tsx
-
-import { useState }      from 'react'
-import Link              from 'next/link'
-import { useRouter }     from 'next/navigation'
-import { createClient }  from '@/lib/supabase/client'
-import { AuthInput }     from './auth-input'
+import { useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { AuthInput } from './auth-input'
 
 interface LoginFormProps {
   redirectTo?: string
-  errorParam?: string   // ?error=invalid_link من الـ callback route
+  errorParam?: string
+  confirmedParam?: string
 }
 
-export function LoginForm({ redirectTo = '/', errorParam }: LoginFormProps) {
-  const router   = useRouter()
+export function LoginForm({ redirectTo = '/', errorParam, confirmedParam }: LoginFormProps) {
+  const router = useRouter()
   const supabase = createClient()
 
-  const [email,    setEmail]    = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
-  const [loading,  setLoading]  = useState(false)
-  const [error,    setError]    = useState<string | null>(
-    errorParam === 'invalid_link' ? 'رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية. يرجى المحاولة مجددًا.' : null
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(
+    errorParam === 'invalid_link'
+      ? 'رابط التحقق أو إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية. يرجى المحاولة مجددًا.'
+      : null
   )
+
+  const successMessage = confirmedParam === '1'
+    ? 'تم تأكيد بريدك الإلكتروني بنجاح. يمكنك الآن تسجيل الدخول.'
+    : null
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
 
-    if (!email.trim())    { setError('البريد الإلكتروني مطلوب'); return }
+    if (!email.trim()) { setError('البريد الإلكتروني مطلوب'); return }
     if (!password.trim()) { setError('كلمة المرور مطلوبة'); return }
 
     setLoading(true)
     try {
       const { error: authError } = await supabase.auth.signInWithPassword({
-        email:    email.trim().toLowerCase(),
+        email: email.trim().toLowerCase(),
         password,
       })
 
@@ -61,6 +66,11 @@ export function LoginForm({ redirectTo = '/', errorParam }: LoginFormProps) {
 
   return (
     <form onSubmit={handleSubmit} dir="rtl" className="space-y-5" noValidate>
+      {successMessage ? (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+          <p className="text-sm text-emerald-700">{successMessage}</p>
+        </div>
+      ) : null}
 
       <AuthInput
         label="البريد الإلكتروني"
@@ -96,7 +106,6 @@ export function LoginForm({ redirectTo = '/', errorParam }: LoginFormProps) {
         }
       />
 
-      {/* Forgot password link */}
       <div className="flex justify-start">
         <Link
           href="/auth/forgot-password"
@@ -106,14 +115,12 @@ export function LoginForm({ redirectTo = '/', errorParam }: LoginFormProps) {
         </Link>
       </div>
 
-      {/* Error */}
       {error && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
           <p className="text-sm text-rose-700">{error}</p>
         </div>
       )}
 
-      {/* Submit */}
       <button
         type="submit"
         disabled={loading}
@@ -128,21 +135,15 @@ export function LoginForm({ redirectTo = '/', errorParam }: LoginFormProps) {
         {loading ? 'جاري تسجيل الدخول…' : 'تسجيل الدخول'}
       </button>
 
-      {/* Sign up link */}
       <p className="text-center text-sm text-stone-500">
         ليس لديك حساب؟{' '}
         <Link href="/auth/signup" className="font-medium text-amber-600 hover:underline">
           إنشاء حساب
         </Link>
       </p>
-
     </form>
   )
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Icons
-// ─────────────────────────────────────────────────────────────────────────────
 
 function Eye() {
   return (

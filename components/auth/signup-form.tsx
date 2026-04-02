@@ -1,48 +1,56 @@
 'use client'
 
-// components/auth/signup-form.tsx
-
-import { useState }      from 'react'
-import Link              from 'next/link'
-import { useRouter }     from 'next/navigation'
-import { createClient }  from '@/lib/supabase/client'
-import { AuthInput }     from './auth-input'
+import { useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { AuthInput } from './auth-input'
 
 interface SignupFormProps {
   redirectTo?: string
 }
 
+function buildSignupConfirmationRedirect() {
+  const origin = typeof window !== 'undefined'
+    ? window.location.origin
+    : process.env.NEXT_PUBLIC_APP_URL ?? ''
+
+  return `${origin}/auth/callback?next=${encodeURIComponent('/auth/login?confirmed=1')}`
+}
+
 export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
-  const router   = useRouter()
+  const router = useRouter()
   const supabase = createClient()
 
-  const [fullName,     setFullName]     = useState('')
-  const [email,        setEmail]        = useState('')
-  const [password,     setPassword]     = useState('')
-  const [confirmPass,  setConfirmPass]  = useState('')
-  const [showPass,     setShowPass]     = useState(false)
-  const [loading,      setLoading]      = useState(false)
-  const [error,        setError]        = useState<string | null>(null)
-  const [success,      setSuccess]      = useState(false)
+  const [fullName, setFullName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPass, setConfirmPass] = useState('')
+  const [showPass, setShowPass] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [resending, setResending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [info, setInfo] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    setInfo(null)
 
-    // ── Validation ────────────────────────────────────────────────────────
-    if (!fullName.trim())             { setError('الاسم الكامل مطلوب'); return }
-    if (!email.trim())                { setError('البريد الإلكتروني مطلوب'); return }
-    if (password.length < 8)          { setError('كلمة المرور يجب أن تكون 8 أحرف على الأقل'); return }
-    if (password !== confirmPass)     { setError('كلمتا المرور غير متطابقتين'); return }
+    if (!fullName.trim()) { setError('الاسم الكامل مطلوب'); return }
+    if (!email.trim()) { setError('البريد الإلكتروني مطلوب'); return }
+    if (password.length < 8) { setError('كلمة المرور يجب أن تكون 8 أحرف على الأقل'); return }
+    if (password !== confirmPass) { setError('كلمتا المرور غير متطابقتين'); return }
 
     setLoading(true)
     try {
       const { data, error: authError } = await supabase.auth.signUp({
-        email:    email.trim().toLowerCase(),
+        email: email.trim().toLowerCase(),
         password,
         options: {
+          emailRedirectTo: buildSignupConfirmationRedirect(),
           data: {
-            // يُقرأ من handle_new_user() trigger في migration 002
             full_name: fullName.trim(),
           },
         },
@@ -57,12 +65,10 @@ export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
         return
       }
 
-      // إذا رجع session → مستخدم مسجّل مباشرة (confirmations disabled)
       if (data.session) {
         router.push(redirectTo)
         router.refresh()
       } else {
-        // Confirmations مفعّلة → أظهر رسالة التأكيد
         setSuccess(true)
       }
     } catch {
@@ -72,7 +78,35 @@ export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
     }
   }
 
-  // ── حالة النجاح مع طلب تأكيد الإيميل ─────────────────────────────────────
+  async function handleResendConfirmation() {
+    if (!email.trim()) return
+
+    setError(null)
+    setInfo(null)
+    setResending(true)
+
+    try {
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim().toLowerCase(),
+        options: {
+          emailRedirectTo: buildSignupConfirmationRedirect(),
+        },
+      })
+
+      if (resendError) {
+        setError(resendError.message)
+        return
+      }
+
+      setInfo('أعدنا إرسال رابط التأكيد. تحقق من صندوق الوارد والبريد غير المرغوب فيه.')
+    } catch {
+      setError('تعذّر إعادة إرسال رسالة التأكيد. حاول مجددًا بعد قليل.')
+    } finally {
+      setResending(false)
+    }
+  }
+
   if (success) {
     return (
       <div dir="rtl" className="space-y-5 text-center">
@@ -86,9 +120,34 @@ export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
           <p className="mt-2 text-sm text-stone-500">
             أرسلنا رابط تأكيد إلى{' '}
             <span className="font-medium text-stone-700">{email}</span>.
-            افتح الرابط لتفعيل حسابك والبدء بالتسوق.
+            افتح الرابط لتفعيل حسابك ثم سجّل الدخول.
+          </p>
+          <p className="mt-2 text-xs text-stone-400">
+            لم تصلك الرسالة؟ تحقق من البريد غير المرغوب فيه أو أعد الإرسال من الزر أدناه.
           </p>
         </div>
+
+        {info ? (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            {info}
+          </div>
+        ) : null}
+
+        {error ? (
+          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            {error}
+          </div>
+        ) : null}
+
+        <button
+          type="button"
+          onClick={handleResendConfirmation}
+          disabled={resending}
+          className="w-full rounded-xl border border-amber-200 px-4 py-3 text-sm font-bold text-amber-700 transition hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {resending ? 'جاري إعادة الإرسال…' : 'إعادة إرسال رابط التأكيد'}
+        </button>
+
         <Link
           href="/auth/login"
           className="block text-sm font-medium text-amber-600 hover:underline"
@@ -101,7 +160,6 @@ export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
 
   return (
     <form onSubmit={handleSubmit} dir="rtl" className="space-y-4" noValidate>
-
       <AuthInput
         label="الاسم الكامل"
         name="full_name"
@@ -157,14 +215,12 @@ export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
         autoComplete="new-password"
       />
 
-      {/* Error */}
       {error && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
           <p className="text-sm text-rose-700">{error}</p>
         </div>
       )}
 
-      {/* Submit */}
       <button
         type="submit"
         disabled={loading}
@@ -179,21 +235,15 @@ export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
         {loading ? 'جاري إنشاء الحساب…' : 'إنشاء حساب'}
       </button>
 
-      {/* Login link */}
       <p className="text-center text-sm text-stone-500">
         لديك حساب بالفعل؟{' '}
         <Link href="/auth/login" className="font-medium text-amber-600 hover:underline">
           تسجيل الدخول
         </Link>
       </p>
-
     </form>
   )
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Icons
-// ─────────────────────────────────────────────────────────────────────────────
 
 function Eye() {
   return (
