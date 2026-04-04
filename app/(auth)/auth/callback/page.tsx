@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 type Mode = 'loading' | 'error'
@@ -20,7 +20,6 @@ function parseHashParams(hash: string) {
 
 export default function AuthCallbackPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const supabase = useMemo(() => createClient(), [])
 
   const [mode, setMode] = useState<Mode>('loading')
@@ -31,6 +30,7 @@ export default function AuthCallbackPage() {
 
     async function bootstrap() {
       const url = new URL(window.location.href)
+      const searchParams = url.searchParams
       const hashParams = parseHashParams(url.hash)
 
       const code = searchParams.get('code') ?? hashParams.get('code')
@@ -48,7 +48,6 @@ export default function AuthCallbackPage() {
             access_token: accessToken,
             refresh_token: refreshToken,
           })
-
           if (error) throw error
 
           window.history.replaceState({}, '', next)
@@ -67,16 +66,12 @@ export default function AuthCallbackPage() {
 
         if (tokenHash && type) {
           const verifyType = type === 'signup' || type === 'email' ? 'signup' : type === 'recovery' ? 'recovery' : null
-
-          if (!verifyType) {
-            throw new Error('UNSUPPORTED_OTP_TYPE')
-          }
+          if (!verifyType) throw new Error('UNSUPPORTED_OTP_TYPE')
 
           const { error } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
             type: verifyType,
           })
-
           if (error) throw error
 
           window.history.replaceState({}, '', next)
@@ -99,11 +94,10 @@ export default function AuthCallbackPage() {
     }
 
     bootstrap()
-
     return () => {
       cancelled = true
     }
-  }, [router, searchParams, supabase])
+  }, [router, supabase])
 
   if (mode === 'loading') {
     return (

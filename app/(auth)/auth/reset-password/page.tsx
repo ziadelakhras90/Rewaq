@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AuthInput } from '@/components/auth/auth-input'
 
@@ -14,7 +14,6 @@ function parseHashParams(hash: string) {
 
 export default function ResetPasswordPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const supabase = useMemo(() => createClient(), [])
 
   const [password, setPassword] = useState('')
@@ -31,6 +30,7 @@ export default function ResetPasswordPage() {
 
     async function bootstrapRecovery() {
       const url = new URL(window.location.href)
+      const searchParams = url.searchParams
       const hashParams = parseHashParams(url.hash)
 
       const accessToken = searchParams.get('access_token') ?? hashParams.get('access_token')
@@ -67,8 +67,7 @@ export default function ResetPasswordPage() {
           throw sessionError ?? new Error('MISSING_RECOVERY_SESSION')
         }
 
-        const cleaned = `${window.location.origin}/auth/reset-password`
-        window.history.replaceState({}, '', cleaned)
+        window.history.replaceState({}, '', `${window.location.origin}/auth/reset-password`)
 
         if (!cancelled) {
           setLinkValid(true)
@@ -91,7 +90,7 @@ export default function ResetPasswordPage() {
     return () => {
       cancelled = true
     }
-  }, [searchParams, supabase])
+  }, [supabase])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
