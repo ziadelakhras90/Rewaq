@@ -1,141 +1,142 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-type SupportedOtpType = 'signup' | 'recovery' | 'invite' | 'email' | 'email_change' | 'magiclink'
+type Mode = 'loading' | 'error'
 
 function normalizeNext(next: string | null, fallback: string) {
   if (!next || !next.startsWith('/')) return fallback
   return next
 }
 
-function getSupportedOtpType(type: string | null): SupportedOtpType | null {
-  switch ((type ?? '').toLowerCase()) {
-    case 'signup':
-      return 'signup'
-    case 'recovery':
-      return 'recovery'
-    case 'invite':
-      return 'invite'
-    case 'email':
-      return 'email'
-    case 'email_change':
-      return 'email_change'
-    case 'magiclink':
-      return 'magiclink'
-    default:
-      return null
-  }
+function parseHashParams(hash: string) {
+  const value = hash.startsWith('#') ? hash.slice(1) : hash
+  return new URLSearchParams(value)
 }
 
 export default function AuthCallbackPage() {
   const router = useRouter()
-  const supabase = createClient()
+  const searchParams = useSearchParams()
+  const supabase = useMemo(() => createClient(), [])
+
+  const [mode, setMode] = useState<Mode>('loading')
+  const [errorMessage, setErrorMessage] = useState('جاري إتمام العملية…')
 
   useEffect(() => {
-    let isMounted = true
+    let cancelled = false
 
-    async function consumeAuthLink() {
-      const currentUrl = new URL(window.location.href)
-      const searchParams = currentUrl.searchParams
-      const hashParams = new URLSearchParams(currentUrl.hash.replace(/^#/, ''))
-
-      const nextFromSearch = searchParams.get('next')
-      const queryType = searchParams.get('type')
-      const hashType = hashParams.get('type')
-      const rawType = (queryType ?? hashType ?? '').toLowerCase()
-      const looksLikeRecovery = rawType === 'recovery' || nextFromSearch === '/auth/reset-password'
-
-      const defaultNext = looksLikeRecovery
-        ? '/auth/reset-password'
-        : '/auth/login?confirmed=1'
-      const next = normalizeNext(nextFromSearch, defaultNext)
-
-      let authError: Error | null = null
+    async function bootstrap() {
+      const url = new URL(window.location.href)
+      const hashParams = parseHashParams(url.hash)
 
       const code = searchParams.get('code') ?? hashParams.get('code')
       const tokenHash = searchParams.get('token_hash') ?? hashParams.get('token_hash')
-      const accessToken = hashParams.get('access_token') ?? searchParams.get('access_token')
-      const refreshToken = hashParams.get('refresh_token') ?? searchParams.get('refresh_token')
+      const type = searchParams.get('type') ?? hashParams.get('type')
+      const accessToken = searchParams.get('access_token') ?? hashParams.get('access_token')
+      const refreshToken = searchParams.get('refresh_token') ?? hashParams.get('refresh_token')
 
-      if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code)
-        authError = error
-      } else if (tokenHash) {
-        const otpType = getSupportedOtpType(rawType)
+      const defaultNext = type === 'recovery' ? '/auth/reset-password' : '/auth/login?confirmed=1'
+      const next = normalizeNext(searchParams.get('next') ?? hashParams.get('next'), defaultNext)
 
-        if (!otpType) {
-          authError = new Error('unsupported_auth_type')
-        } else {
+      try {
+        if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          })
+
+          if (error) throw error
+
+          window.history.replaceState({}, '', next)
+          router.replace(next)
+          return
+        }
+
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code)
+          if (error) throw error
+
+          window.history.replaceState({}, '', next)
+          router.replace(next)
+          return
+        }
+
+        if (tokenHash && type) {
+          const verifyType = type === 'signup' || type === 'email' ? 'signup' : type === 'recovery' ? 'recovery' : null
+
+          if (!verifyType) {
+            throw new Error('UNSUPPORTED_OTP_TYPE')
+          }
+
           const { error } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
-            type: otpType,
+            type: verifyType,
           })
-          authError = error
+
+          if (error) throw error
+
+          window.history.replaceState({}, '', next)
+          router.replace(next)
+          return
         }
-      } else if (accessToken && refreshToken) {
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        })
-        authError = error
-      } else {
-        authError = new Error('missing_auth_params')
+
+        throw new Error('MISSING_AUTH_PARAMS')
+      } catch {
+        if (cancelled) return
+
+        const isRecovery = type === 'recovery' || next === '/auth/reset-password'
+        setErrorMessage(
+          isRecovery
+            ? 'رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد.'
+            : 'رابط تأكيد البريد الإلكتروني غير صالح أو منتهي الصلاحية. يرجى إعادة إرسال رابط التأكيد.'
+        )
+        setMode('error')
       }
-
-      if (!isMounted) return
-
-      if (authError) {
-        const invalidTarget = looksLikeRecovery
-          ? '/auth/login?error=invalid_reset_link'
-          : '/auth/login?error=invalid_confirmation_link'
-
-        router.replace(invalidTarget)
-        return
-      }
-
-      if (looksLikeRecovery) {
-        window.history.replaceState({}, document.title, next)
-        router.replace(next)
-        return
-      }
-
-      await supabase.auth.signOut()
-      window.history.replaceState({}, document.title, next)
-      router.replace(next)
     }
 
-    void consumeAuthLink()
+    bootstrap()
 
     return () => {
-      isMounted = false
+      cancelled = true
     }
-  }, [router, supabase])
+  }, [router, searchParams, supabase])
+
+  if (mode === 'loading') {
+    return (
+      <div dir="rtl" className="flex min-h-screen items-center justify-center bg-stone-50 px-4">
+        <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white px-6 py-10 shadow-sm text-center space-y-4">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-stone-200 border-t-amber-500" />
+          <h1 className="text-base font-bold text-stone-900">جاري إتمام العملية…</h1>
+          <p className="text-sm text-stone-500">يرجى الانتظار لحظة واحدة.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div dir="rtl" className="flex min-h-screen items-center justify-center bg-stone-50 px-4">
-      <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white px-6 py-10 shadow-sm text-center space-y-4">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-stone-100">
-          <svg className="h-7 w-7 animate-spin text-stone-500" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
+      <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white px-6 py-10 shadow-sm text-center space-y-5">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-rose-100">
+          <svg className="h-8 w-8 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M4.93 19h14.14c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.2 16c-.77 1.33.19 3 1.73 3z" />
           </svg>
         </div>
-
         <div>
-          <h1 className="text-base font-bold text-stone-900">جاري التحقق من الرابط…</h1>
-          <p className="mt-2 text-sm text-stone-500">
-            انتظر لحظة بينما نكمل عملية التحقق وننقلك إلى الصفحة المناسبة.
-          </p>
+          <h1 className="text-base font-bold text-stone-900">تعذر إتمام العملية</h1>
+          <p className="mt-2 text-sm leading-relaxed text-stone-500">{errorMessage}</p>
         </div>
-
-        <Link href="/auth/login" className="text-sm font-medium text-amber-600 hover:underline">
-          العودة إلى تسجيل الدخول
-        </Link>
+        <div className="space-y-2">
+          <Link href="/auth/forgot-password" className="block text-sm font-medium text-amber-600 hover:underline">
+            طلب رابط إعادة تعيين جديد
+          </Link>
+          <Link href="/auth/login" className="block text-sm font-medium text-stone-600 hover:underline">
+            العودة إلى تسجيل الدخول
+          </Link>
+        </div>
       </div>
     </div>
   )

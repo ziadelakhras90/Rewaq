@@ -41,7 +41,9 @@ export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
         ? window.location.origin
         : process.env.NEXT_PUBLIC_APP_URL ?? ''
 
-      const emailRedirectTo = `${origin}/auth/callback?next=/auth/login?confirmed=1`
+      const callbackUrl = new URL('/auth/callback', origin)
+      callbackUrl.searchParams.set('next', '/auth/login?confirmed=1')
+      const emailRedirectTo = callbackUrl.toString()
 
       const { data, error: authError } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
@@ -95,7 +97,11 @@ export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
         type: 'signup',
         email: email.trim().toLowerCase(),
         options: {
-          emailRedirectTo: `${origin}/auth/callback?next=/auth/login?confirmed=1`,
+          emailRedirectTo: (() => {
+            const callbackUrl = new URL('/auth/callback', origin)
+            callbackUrl.searchParams.set('next', '/auth/login?confirmed=1')
+            return callbackUrl.toString()
+          })(),
         },
       })
 
