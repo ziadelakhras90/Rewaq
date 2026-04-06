@@ -4,6 +4,7 @@
 
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { getServerAppUrl } from '@/lib/utils/app-url'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Metadata
@@ -11,26 +12,24 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: {
-    default:  'رِواق | Riwaq — سوق إلكتروني عربي',
+    default: 'رِواق | Riwaq — سوق إلكتروني عربي',
     template: '%s | رِواق',
   },
   description: 'تسوّق من أفضل المتاجر العربية في مكان واحد. منصة رِواق للتجارة الإلكترونية متعددة البائعين.',
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-  ),
+  metadataBase: new URL(getServerAppUrl()),
   openGraph: {
-    type:   'website',
+    type: 'website',
     locale: 'ar_SA',
     siteName: 'رِواق | Riwaq',
   },
   robots: {
-    index:  true,
+    index: true,
     follow: true,
   },
 }
 
 export const viewport: Viewport = {
-  width:        'device-width',
+  width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
 }
