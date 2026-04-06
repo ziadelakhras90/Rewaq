@@ -36,7 +36,8 @@ export function AddToCartButton({
 
   async function handleAdd() {
     if (!user) {
-      router.push('/auth/login?redirect=' + encodeURIComponent(window.location.pathname))
+      const redirectTarget = `${window.location.pathname}${window.location.search}${window.location.hash}`
+      router.push('/auth/login?redirect=' + encodeURIComponent(redirectTarget))
       return
     }
     setLoading(true)

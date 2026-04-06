@@ -4,7 +4,6 @@
 // لا يعرف عن UI أو HTTP — يُستدعى من hooks أو server actions
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/types/database.types'
 
 type SupabaseClient = any
@@ -18,19 +17,24 @@ export type CartItem = Database['public']['Tables']['cart_items']['Row']
 
 export interface CartItemWithProduct extends CartItem {
   products: {
-    id:             string
-    name:           string
-    slug:           string
-    price:          number
+    id: string
+    name: string
+    slug: string
+    price: number
     stock_quantity: number
     track_inventory: boolean
-    status:         string
-    store_id:       string
+    status: string
+    store_id: string
     product_images: { url: string; is_primary: boolean }[]
   }
 }
 
 export interface CartWithItems extends Cart {
+  stores: {
+    id: string
+    name: string
+    slug: string
+  } | null
   cart_items: CartItemWithProduct[]
 }
 
@@ -44,7 +48,7 @@ export type AddToCartResult =
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function getOrCreateActiveCart(
-  supabase:   SupabaseClient,
+  supabase: SupabaseClient,
   customerId: string
 ): Promise<Cart> {
   // محاولة جلب السلة النشطة
@@ -76,13 +80,18 @@ export async function getOrCreateActiveCart(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function getCartWithItems(
-  supabase:   SupabaseClient,
+  supabase: SupabaseClient,
   customerId: string
 ): Promise<CartWithItems | null> {
   const { data, error } = await supabase
     .from('carts')
     .select(`
       *,
+      stores (
+        id,
+        name,
+        slug
+      ),
       cart_items (
         *,
         products (
@@ -110,7 +119,7 @@ export async function getCartWithItems(
     return null
   }
 
-  return data as any as CartWithItems | null
+  return data as CartWithItems | null
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -118,10 +127,10 @@ export async function getCartWithItems(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function addToCart(
-  supabase:   SupabaseClient,
+  supabase: SupabaseClient,
   customerId: string,
-  productId:  string,
-  quantity:   number = 1
+  productId: string,
+  quantity: number = 1
 ): Promise<AddToCartResult> {
   // 1. جلب بيانات المنتج
   const { data: product, error: productError } = await supabase
@@ -148,10 +157,10 @@ export async function addToCart(
   // 3. التحقق من تعارض المتجر (single-vendor enforcement)
   if (cart.store_id && cart.store_id !== product.store_id) {
     return {
-      success:        false,
-      conflict:       true,
+      success: false,
+      conflict: true,
       currentStoreId: cart.store_id,
-      newStoreId:     product.store_id,
+      newStoreId: product.store_id,
     }
   }
 
@@ -181,7 +190,7 @@ export async function addToCart(
     const { error: insertError } = await supabase
       .from('cart_items')
       .insert({
-        cart_id:    cart.id,
+        cart_id: cart.id,
         product_id: productId,
         quantity,
         unit_price: product.price,
@@ -206,10 +215,10 @@ export async function addToCart(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function updateCartItemQuantity(
-  supabase:   SupabaseClient,
+  supabase: SupabaseClient,
   customerId: string,
-  itemId:     string,
-  quantity:   number
+  itemId: string,
+  quantity: number
 ): Promise<{ success: boolean; error?: string }> {
   if (quantity < 1) {
     return removeFromCart(supabase, customerId, itemId)
@@ -222,8 +231,26 @@ export async function updateCartItemQuantity(
     .eq('id', itemId)
     .maybeSingle()
 
-  if (!item || (item.carts as any)?.customer_id !== customerId) {
+  if (!item || item.carts?.customer_id !== customerId) {
     return { success: false, error: 'العنصر غير موجود' }
+  }
+
+  const { data: product, error: productError } = await supabase
+    .from('products')
+    .select('status, stock_quantity, track_inventory')
+    .eq('id', item.product_id)
+    .maybeSingle()
+
+  if (productError || !product) {
+    return { success: false, error: 'المنتج غير موجود' }
+  }
+
+  if (product.status !== 'active') {
+    return { success: false, error: 'هذا المنتج غير متاح حاليًا' }
+  }
+
+  if (product.track_inventory && quantity > product.stock_quantity) {
+    return { success: false, error: `الكمية المتاحة: ${product.stock_quantity}` }
   }
 
   const { error } = await supabase
@@ -240,18 +267,37 @@ export async function updateCartItemQuantity(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function removeFromCart(
-  supabase:   SupabaseClient,
+  supabase: SupabaseClient,
   customerId: string,
-  itemId:     string
+  itemId: string
 ): Promise<{ success: boolean; error?: string }> {
-  // نتحقق من الملكية عبر JOIN — RLS يحمي لكن نتحقق مزدوج
+  const { data: cart } = await supabase
+    .from('carts')
+    .select('id')
+    .eq('customer_id', customerId)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  if (!cart) {
+    return { success: false, error: 'السلة غير موجودة' }
+  }
+
+  const { data: item } = await supabase
+    .from('cart_items')
+    .select('id')
+    .eq('id', itemId)
+    .eq('cart_id', cart.id)
+    .maybeSingle()
+
+  if (!item) {
+    return { success: false, error: 'العنصر غير موجود' }
+  }
+
   const { error: deleteError } = await supabase
     .from('cart_items')
     .delete()
     .eq('id', itemId)
-    .in('cart_id', (
-      supabase.from('carts').select('id').eq('customer_id', customerId).eq('status', 'active') as any
-    ))
+    .eq('cart_id', cart.id)
 
   if (deleteError) return { success: false, error: 'فشل حذف العنصر' }
 
@@ -266,7 +312,7 @@ export async function removeFromCart(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function clearCart(
-  supabase:   SupabaseClient,
+  supabase: SupabaseClient,
   customerId: string
 ): Promise<{ success: boolean; error?: string }> {
   const cart = await getOrCreateActiveCart(supabase, customerId)
@@ -291,7 +337,7 @@ export async function clearCart(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function getCartItemCount(
-  supabase:   SupabaseClient,
+  supabase: SupabaseClient,
   customerId: string
 ): Promise<number> {
   const { data } = await supabase
@@ -312,7 +358,7 @@ export async function getCartItemCount(
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function clearStoreIdIfEmpty(
-  supabase:   SupabaseClient,
+  supabase: SupabaseClient,
   customerId: string
 ): Promise<void> {
   const { data: cart } = await supabase

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { getAppUrl } from '@/lib/utils/app-url'
 import { AuthInput } from './auth-input'
 
 interface SignupFormProps {
@@ -37,9 +38,7 @@ export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
 
     setLoading(true)
     try {
-      const origin = typeof window !== 'undefined'
-        ? window.location.origin
-        : process.env.NEXT_PUBLIC_APP_URL ?? ''
+      const origin = getAppUrl()
 
       const callbackUrl = new URL('/auth/callback', origin)
       callbackUrl.searchParams.set('next', '/auth/login?confirmed=1')
@@ -89,9 +88,7 @@ export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
 
     setResending(true)
     try {
-      const origin = typeof window !== 'undefined'
-        ? window.location.origin
-        : process.env.NEXT_PUBLIC_APP_URL ?? ''
+      const origin = getAppUrl()
 
       const { error: resendError } = await supabase.auth.resend({
         type: 'signup',
