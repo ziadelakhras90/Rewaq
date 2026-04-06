@@ -61,7 +61,7 @@ export default function ForgotPasswordPage() {
               <p className="mt-2 text-sm leading-relaxed text-stone-500">
                 إذا كان البريد <span className="font-medium text-stone-700">{email}</span> مسجّلًا لدينا، ستصل إليك رسالة تحتوي رابط إعادة تعيين كلمة المرور.
               </p>
-              <p className="mt-2 text-xs text-stone-400">لم يصلك شيء؟ تحقق من مجلد البريد غير المرغوب فيه.</p>
+              <p className="mt-2 text-xs text-stone-400">لم يصلك شيء؟ تحقق من مجلد البريد غير المرغوب فيه، وافتح الرابط من نفس الجهاز والمتصفح الذي طلبت منه إعادة التعيين.</p>
             </div>
             <Link href="/auth/login" className="inline-block text-sm font-medium text-amber-600 hover:underline">
               العودة إلى تسجيل الدخول

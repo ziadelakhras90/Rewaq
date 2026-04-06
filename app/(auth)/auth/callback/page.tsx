@@ -18,6 +18,24 @@ function parseHashParams(hash: string) {
   return new URLSearchParams(value)
 }
 
+function getFriendlyErrorMessage(params: {
+  next: string
+  type: string | null
+  errorMessage: string | null
+}) {
+  const isRecovery = params.type === 'recovery' || params.next === '/auth/reset-password'
+
+  if (!isRecovery) {
+    return 'رابط تأكيد البريد الإلكتروني غير صالح أو منتهي الصلاحية. يرجى إعادة إرسال رابط التأكيد.'
+  }
+
+  if (params.errorMessage?.toLowerCase().includes('code verifier')) {
+    return 'تم فتح رابط إعادة التعيين في متصفح مختلف عن الذي طُلب منه الرابط. افتح الرابط من نفس الجهاز والمتصفح أو حدّث قالب Supabase ليستخدم token_hash بدلاً من code.'
+  }
+
+  return 'رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد.'
+}
+
 export default function AuthCallbackPage() {
   const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
@@ -55,15 +73,6 @@ export default function AuthCallbackPage() {
           return
         }
 
-        if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code)
-          if (error) throw error
-
-          window.history.replaceState({}, '', next)
-          router.replace(next)
-          return
-        }
-
         if (tokenHash && type) {
           const verifyType = type === 'signup' || type === 'email' ? 'signup' : type === 'recovery' ? 'recovery' : null
           if (!verifyType) throw new Error('UNSUPPORTED_OTP_TYPE')
@@ -79,15 +88,26 @@ export default function AuthCallbackPage() {
           return
         }
 
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code)
+          if (error) throw error
+
+          window.history.replaceState({}, '', next)
+          router.replace(next)
+          return
+        }
+
         throw new Error('MISSING_AUTH_PARAMS')
-      } catch {
+      } catch (error) {
         if (cancelled) return
 
-        const isRecovery = type === 'recovery' || next === '/auth/reset-password'
+        const normalizedError = error instanceof Error ? error.message : null
         setErrorMessage(
-          isRecovery
-            ? 'رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد.'
-            : 'رابط تأكيد البريد الإلكتروني غير صالح أو منتهي الصلاحية. يرجى إعادة إرسال رابط التأكيد.'
+          getFriendlyErrorMessage({
+            next,
+            type,
+            errorMessage: normalizedError,
+          })
         )
         setMode('error')
       }
@@ -122,6 +142,12 @@ export default function AuthCallbackPage() {
         <div>
           <h1 className="text-base font-bold text-stone-900">تعذر إتمام العملية</h1>
           <p className="mt-2 text-sm leading-relaxed text-stone-500">{errorMessage}</p>
+          <p className="mt-3 text-xs leading-6 text-stone-400">
+            لحل دائم لمشكلة إعادة التعيين، استخدم في Supabase Reset Password Template رابطًا يعتمد على
+            {' '}<span dir="ltr" className="font-medium text-stone-500">token_hash</span>{' '}
+            بدلًا من
+            {' '}<span dir="ltr" className="font-medium text-stone-500">code</span>.
+          </p>
         </div>
         <div className="space-y-2">
           <Link href="/auth/forgot-password" className="block text-sm font-medium text-amber-600 hover:underline">

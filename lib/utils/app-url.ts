@@ -17,8 +17,20 @@ function normalizeUrl(value?: string | null): string {
   }
 }
 
+function getConfiguredUrl(): string {
+  return normalizeUrl(
+    process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.SITE_URL ||
+      process.env.URL ||
+      process.env.DEPLOY_PRIME_URL ||
+      process.env.NETLIFY_URL ||
+      DEFAULT_APP_URL
+  )
+}
+
 export function getServerAppUrl(): string {
-  return normalizeUrl(process.env.NEXT_PUBLIC_APP_URL)
+  return getConfiguredUrl()
 }
 
 export function getAppUrl(): string {
