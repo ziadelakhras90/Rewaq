@@ -265,28 +265,33 @@ export function CheckoutForm({ cart, subtotal, addresses, userId }: CheckoutForm
         throw new Error('يجب تسجيل الدخول أولًا قبل إرسال الطلب')
       }
 
-      const { data, error: fnError } = await supabase.functions.invoke<CreateOrderResponse>(
-        'create-order',
-        {
-          body,
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      )
+      const functionUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-order`
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(body),
+      })
 
-      if (fnError) {
-        const message = (fnError as any)?.context?.error
-          ?? (fnError as any)?.message
-          ?? 'حدث خطأ أثناء إنشاء الطلب'
+      const responseBody = await response.json().catch(() => null)
 
-        if (message.includes('PRICE_CHANGED')) {
+      if (!response.ok) {
+        const rawMessage = responseBody?.error || responseBody?.message || 'حدث خطأ أثناء إنشاء الطلب'
+        const rawCode = responseBody?.code || ''
+        const message = typeof rawMessage === 'string' ? rawMessage : 'حدث خطأ أثناء إنشاء الطلب'
+
+        if (message.includes('PRICE_CHANGED') || rawCode === 'PRICE_CHANGED') {
           setError('تغيّرت أسعار بعض المنتجات. راجع السلة ثم حاول مرة أخرى.')
         } else {
           setError(message)
         }
         return
       }
+
+      const data = responseBody as CreateOrderResponse | null
 
       if (!data?.orderNumber) {
         setError('حدث خطأ غير متوقع أثناء تسجيل الطلب')
