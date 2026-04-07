@@ -163,19 +163,18 @@ export async function getProducts(
 
 // ─────────────────────────────────────────────────────────────────────────────
 // getProductBySlug — لصفحة تفاصيل المنتج
+// يدعم جلب المنتج بواسطة id (المسار الجديد) أو slug (روابط قديمة)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function getProductBySlug(
   supabase: SupabaseClient<Database, 'public', any>,
-  slug:     string
+  identifier: string
 ): Promise<ProductRow & {
   stores:         { id: string; name: string; slug: string; city: string | null }
   categories:     { id: string; name: string } | null
   product_images: { url: string; alt_text: string | null; sort_order: number; is_primary: boolean }[]
 } | null> {
-  const { data, error } = await supabase
-    .from('products')
-    .select(`
+  const selectQuery = `
       *,
       stores!inner (
         id,
@@ -193,18 +192,41 @@ export async function getProductBySlug(
         sort_order,
         is_primary
       )
-    `)
-    .eq('slug', slug)
+    `
+
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(identifier)
+
+  if (isUuid) {
+    const { data, error } = await supabase
+      .from('products')
+      .select(selectQuery)
+      .eq('id', identifier)
+      .eq('status', 'active')
+      .eq('stores.status', 'active')
+      .maybeSingle()
+
+    if (error) {
+      console.error('getProductBySlug by id error:', error)
+    }
+
+    if (data) return data as any
+  }
+
+  const { data, error } = await supabase
+    .from('products')
+    .select(selectQuery)
+    .eq('slug', identifier)
     .eq('status', 'active')
     .eq('stores.status', 'active')
-    .maybeSingle()
+    .order('created_at', { ascending: false })
+    .limit(1)
 
   if (error) {
-    console.error('getProductBySlug error:', error)
+    console.error('getProductBySlug by slug error:', error)
     return null
   }
 
-  return data as any
+  return (data?.[0] as any) ?? null
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

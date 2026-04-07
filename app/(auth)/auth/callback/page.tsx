@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { getAppUrl } from '@/lib/utils/app-url'
 
 type Mode = 'loading' | 'error'
 
@@ -42,6 +43,9 @@ export default function AuthCallbackPage() {
 
   const [mode, setMode] = useState<Mode>('loading')
   const [errorMessage, setErrorMessage] = useState('جاري إتمام العملية…')
+  const [currentType, setCurrentType] = useState<string | null>(null)
+  const [resendMessage, setResendMessage] = useState<string | null>(null)
+  const [resending, setResending] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -59,6 +63,7 @@ export default function AuthCallbackPage() {
 
       const defaultNext = type === 'recovery' ? '/auth/reset-password' : '/auth/login?confirmed=1'
       const next = normalizeNext(searchParams.get('next') ?? hashParams.get('next'), defaultNext)
+      setCurrentType(type)
 
       try {
         if (accessToken && refreshToken) {
@@ -68,13 +73,17 @@ export default function AuthCallbackPage() {
           })
           if (error) throw error
 
+          if (type !== 'recovery' && typeof window !== 'undefined') {
+            window.localStorage.removeItem('rewq-pending-signup-email')
+          }
+
           window.history.replaceState({}, '', next)
           router.replace(next)
           return
         }
 
         if (tokenHash && type) {
-          const verifyType = type === 'signup' || type === 'email' ? 'signup' : type === 'recovery' ? 'recovery' : null
+          const verifyType = type === 'email' ? 'email' : type === 'signup' ? 'signup' : type === 'recovery' ? 'recovery' : null
           if (!verifyType) throw new Error('UNSUPPORTED_OTP_TYPE')
 
           const { error } = await supabase.auth.verifyOtp({
@@ -82,6 +91,10 @@ export default function AuthCallbackPage() {
             type: verifyType,
           })
           if (error) throw error
+
+          if (verifyType !== 'recovery' && typeof window !== 'undefined') {
+            window.localStorage.removeItem('rewq-pending-signup-email')
+          }
 
           window.history.replaceState({}, '', next)
           router.replace(next)
@@ -91,6 +104,10 @@ export default function AuthCallbackPage() {
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code)
           if (error) throw error
+
+          if (type !== 'recovery' && typeof window !== 'undefined') {
+            window.localStorage.removeItem('rewq-pending-signup-email')
+          }
 
           window.history.replaceState({}, '', next)
           router.replace(next)
@@ -119,6 +136,45 @@ export default function AuthCallbackPage() {
     }
   }, [router, supabase])
 
+  async function handleResendConfirmation() {
+    const pendingEmail = typeof window !== 'undefined'
+      ? window.localStorage.getItem('rewq-pending-signup-email')
+      : null
+
+    setResendMessage(null)
+
+    if (!pendingEmail) {
+      setResendMessage('تعذر تحديد البريد الإلكتروني لهذا الحساب. ارجع إلى صفحة إنشاء الحساب وحاول مرة أخرى.')
+      return
+    }
+
+    setResending(true)
+    try {
+      const origin = getAppUrl()
+      const callbackUrl = new URL('/auth/callback', origin)
+      callbackUrl.searchParams.set('next', '/auth/login?confirmed=1')
+
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: pendingEmail,
+        options: {
+          emailRedirectTo: callbackUrl.toString(),
+        },
+      })
+
+      if (error) {
+        setResendMessage(error.message)
+        return
+      }
+
+      setResendMessage('أعدنا إرسال رابط التأكيد. تحقق من بريدك الإلكتروني.')
+    } catch {
+      setResendMessage('تعذر إعادة إرسال الرابط الآن. حاول مرة أخرى بعد قليل.')
+    } finally {
+      setResending(false)
+    }
+  }
+
   if (mode === 'loading') {
     return (
       <div dir="rtl" className="flex min-h-screen items-center justify-center bg-stone-50 px-4">
@@ -131,6 +187,8 @@ export default function AuthCallbackPage() {
     )
   }
 
+  const isRecovery = currentType === 'recovery'
+
   return (
     <div dir="rtl" className="flex min-h-screen items-center justify-center bg-stone-50 px-4">
       <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white px-6 py-10 shadow-sm text-center space-y-5">
@@ -142,20 +200,57 @@ export default function AuthCallbackPage() {
         <div>
           <h1 className="text-base font-bold text-stone-900">تعذر إتمام العملية</h1>
           <p className="mt-2 text-sm leading-relaxed text-stone-500">{errorMessage}</p>
-          <p className="mt-3 text-xs leading-6 text-stone-400">
-            لحل دائم لمشكلة إعادة التعيين، استخدم في Supabase Reset Password Template رابطًا يعتمد على
-            {' '}<span dir="ltr" className="font-medium text-stone-500">token_hash</span>{' '}
-            بدلًا من
-            {' '}<span dir="ltr" className="font-medium text-stone-500">code</span>.
-          </p>
+          {isRecovery ? (
+            <p className="mt-3 text-xs leading-6 text-stone-400">
+              لحل دائم لمشكلة إعادة التعيين، استخدم في Supabase Reset Password Template رابطًا يعتمد على{' '}
+              <span dir="ltr" className="font-medium text-stone-500">token_hash</span>{' '}
+              بدلًا من{' '}
+              <span dir="ltr" className="font-medium text-stone-500">code</span>.
+            </p>
+          ) : (
+            <p className="mt-3 text-xs leading-6 text-stone-400">
+              إذا عدّلت قالب تأكيد التسجيل في Supabase، فتأكد أن الرابط يستخدم{' '}
+              <span dir="ltr" className="font-medium text-stone-500">token_hash</span>{' '}
+              مع{' '}
+              <span dir="ltr" className="font-medium text-stone-500">type=email</span>.
+            </p>
+          )}
         </div>
+
+        {resendMessage && (
+          <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-600">
+            {resendMessage}
+          </div>
+        )}
+
         <div className="space-y-2">
-          <Link href="/auth/forgot-password" className="block text-sm font-medium text-amber-600 hover:underline">
-            طلب رابط إعادة تعيين جديد
-          </Link>
-          <Link href="/auth/login" className="block text-sm font-medium text-stone-600 hover:underline">
-            العودة إلى تسجيل الدخول
-          </Link>
+          {isRecovery ? (
+            <>
+              <Link href="/auth/forgot-password" className="block text-sm font-medium text-amber-600 hover:underline">
+                طلب رابط إعادة تعيين جديد
+              </Link>
+              <Link href="/auth/login" className="block text-sm font-medium text-stone-600 hover:underline">
+                العودة إلى تسجيل الدخول
+              </Link>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={handleResendConfirmation}
+                disabled={resending}
+                className="w-full rounded-xl border border-stone-200 bg-white py-3 text-sm font-bold text-stone-700 hover:bg-stone-50 transition disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {resending ? 'جاري إعادة الإرسال…' : 'إعادة إرسال رابط التأكيد'}
+              </button>
+              <Link href="/auth/signup" className="block text-sm font-medium text-amber-600 hover:underline">
+                العودة إلى إنشاء الحساب
+              </Link>
+              <Link href="/auth/login" className="block text-sm font-medium text-stone-600 hover:underline">
+                العودة إلى تسجيل الدخول
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </div>

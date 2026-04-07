@@ -25,9 +25,9 @@ export function prepareForSearch(text: string): string {
 }
 
 /**
- * تنسيق السعر بالريال السعودي
+ * تنسيق السعر بالجنيه المصري
  */
-export function formatCurrency(amount: number, currency = 'SAR', locale = 'ar-SA'): string {
+export function formatCurrency(amount: number, currency = 'EGP', locale = 'ar-EG'): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
@@ -41,7 +41,7 @@ export function formatCurrency(amount: number, currency = 'SAR', locale = 'ar-SA
  */
 export function formatDate(
   date: string | Date,
-  locale = 'ar-SA',
+  locale = 'ar-EG',
   options: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     month: 'long',
@@ -56,7 +56,7 @@ export function formatDate(
  * تنسيق التاريخ والوقت
  */
 export function formatDateTime(date: string | Date): string {
-  return formatDate(date, 'ar-SA', {
+  return formatDate(date, 'ar-EG', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
