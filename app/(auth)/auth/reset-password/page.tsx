@@ -1,7 +1,7 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -14,6 +14,8 @@ function parseHashParams(hash: string) {
 
 export default function ResetPasswordPage() {
   const router = useRouter()
+  const supabase = useMemo(() => createClient(), [])
+
   const [password, setPassword] = useState('')
   const [confirmPass, setConfirmPass] = useState('')
   const [showPass, setShowPass] = useState(false)
@@ -27,7 +29,6 @@ export default function ResetPasswordPage() {
     let cancelled = false
 
     async function bootstrapRecovery() {
-      const supabase = createClient()
       const url = new URL(window.location.href)
       const searchParams = url.searchParams
       const hashParams = parseHashParams(url.hash)
@@ -89,7 +90,7 @@ export default function ResetPasswordPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [supabase])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -107,7 +108,6 @@ export default function ResetPasswordPage() {
 
     setLoading(true)
     try {
-      const supabase = createClient()
       const { error: updateError } = await supabase.auth.updateUser({ password })
 
       if (updateError) {

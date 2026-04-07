@@ -1,7 +1,7 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -39,6 +39,8 @@ function getFriendlyErrorMessage(params: {
 
 export default function AuthCallbackPage() {
   const router = useRouter()
+  const supabase = useMemo(() => createClient(), [])
+
   const [mode, setMode] = useState<Mode>('loading')
   const [errorMessage, setErrorMessage] = useState('جاري إتمام العملية…')
   const [currentType, setCurrentType] = useState<string | null>(null)
@@ -65,7 +67,6 @@ export default function AuthCallbackPage() {
 
       try {
         if (accessToken && refreshToken) {
-          const supabase = createClient()
           const { error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
@@ -85,7 +86,6 @@ export default function AuthCallbackPage() {
           const verifyType = type === 'email' ? 'email' : type === 'signup' ? 'signup' : type === 'recovery' ? 'recovery' : null
           if (!verifyType) throw new Error('UNSUPPORTED_OTP_TYPE')
 
-          const supabase = createClient()
           const { error } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
             type: verifyType,
@@ -102,7 +102,6 @@ export default function AuthCallbackPage() {
         }
 
         if (code) {
-          const supabase = createClient()
           const { error } = await supabase.auth.exchangeCodeForSession(code)
           if (error) throw error
 
@@ -135,7 +134,7 @@ export default function AuthCallbackPage() {
     return () => {
       cancelled = true
     }
-  }, [router])
+  }, [router, supabase])
 
   async function handleResendConfirmation() {
     const pendingEmail = typeof window !== 'undefined'
@@ -155,7 +154,6 @@ export default function AuthCallbackPage() {
       const callbackUrl = new URL('/auth/callback', origin)
       callbackUrl.searchParams.set('next', '/auth/login?confirmed=1')
 
-      const supabase = createClient()
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email: pendingEmail,
