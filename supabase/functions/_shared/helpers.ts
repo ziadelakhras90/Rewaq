@@ -29,24 +29,26 @@ export function getAdminClient(): SupabaseClient {
 // HTTP Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
+export const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
 export function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
-      'Content-Type':                'application/json',
-      'Access-Control-Allow-Origin': '*',
+      ...corsHeaders,
+      'Content-Type': 'application/json',
     },
   })
 }
 
 export function handleOptions(): Response {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin':  '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'authorization, content-type',
-    },
+  return new Response('ok', {
+    status: 200,
+    headers: corsHeaders,
   })
 }
 

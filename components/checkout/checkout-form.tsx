@@ -253,9 +253,26 @@ export function CheckoutForm({ cart, subtotal, addresses, userId }: CheckoutForm
         notes: noteParts.length > 0 ? noteParts.join('\n\n') : undefined,
       }
 
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+
+      if (sessionError) {
+        throw new Error('تعذر التحقق من جلسة المستخدم الحالية')
+      }
+
+      const accessToken = sessionData.session?.access_token
+
+      if (!accessToken) {
+        throw new Error('يجب تسجيل الدخول أولًا قبل إرسال الطلب')
+      }
+
       const { data, error: fnError } = await supabase.functions.invoke<CreateOrderResponse>(
         'create-order',
-        { body }
+        {
+          body,
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       )
 
       if (fnError) {

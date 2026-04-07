@@ -14,6 +14,8 @@ interface LoginFormProps {
 
 export function LoginForm({ redirectTo = '/', errorParam, confirmedParam }: LoginFormProps) {
   const router = useRouter()
+  const supabase = createClient()
+
   const initialError =
     errorParam === 'invalid_reset_link'
       ? 'رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد.'
@@ -40,7 +42,6 @@ export function LoginForm({ redirectTo = '/', errorParam, confirmedParam }: Logi
 
     setLoading(true)
     try {
-      const supabase = createClient()
       const { error: authError } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
