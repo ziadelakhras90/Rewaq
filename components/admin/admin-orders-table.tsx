@@ -73,7 +73,7 @@ export function AdminOrdersTable({ orders }: AdminOrdersTableProps) {
       'المدينة',
       'المتجر',
       'عدد المنتجات',
-      'الإجمالي (ر.س)',
+      'الإجمالي (ج.م)',
       'حالة الطلب',
       'حالة الدفع',
       'تاريخ الطلب',

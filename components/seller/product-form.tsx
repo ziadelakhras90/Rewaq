@@ -34,7 +34,7 @@ const EMPTY_FORM: SellerProductFormValues = {
   sku: '',
   stock_quantity: '0',
   track_inventory: true,
-  status: 'draft',
+  status: 'active',
   is_featured: false,
   images: [{ url: '', is_primary: true }],
 }

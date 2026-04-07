@@ -27,7 +27,7 @@ export function CartItem({ item, onQuantityChange, onRemove, disabled }: CartIte
     <div dir="rtl" className={`flex gap-4 py-5 ${disabled ? 'pointer-events-none opacity-60' : ''}`}>
 
       {/* ── الصورة ──────────────────────────────────────────────────────── */}
-      <Link href={`/product/${product.slug}`} className="shrink-0">
+      <Link href={`/product/${product.id}`} className="shrink-0">
         <div className="relative h-20 w-20 overflow-hidden rounded-xl bg-stone-100 sm:h-24 sm:w-24">
           {primaryImg ? (
             <Image src={primaryImg} alt={product.name} fill sizes="96px" className="object-cover" />
@@ -46,7 +46,7 @@ export function CartItem({ item, onQuantityChange, onRemove, disabled }: CartIte
       <div className="flex flex-1 flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-0.5">
-            <Link href={`/product/${product.slug}`}
+            <Link href={`/product/${product.id}`}
               className="text-sm font-medium text-stone-800 hover:text-stone-900 transition line-clamp-2">
               {product.name}
             </Link>

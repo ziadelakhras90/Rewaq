@@ -71,7 +71,7 @@ export function ProductImageUploader({ images, onChange }: ProductImageUploaderP
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold text-stone-800">صور المنتج</h3>
-          <p className="text-xs text-stone-400">ارفع الصور مباشرة من جهازك. سيتم حفظها في Supabase Storage داخل مسارك الخاص.</p>
+          <p className="text-xs text-stone-400">ارفع الصور مباشرة من جهازك.</p>
         </div>
         <button type="button" onClick={addImage} className="rounded-xl border border-stone-200 px-3 py-2 text-sm font-semibold text-stone-700 hover:border-stone-300">
           إضافة صورة
@@ -98,7 +98,7 @@ export function ProductImageUploader({ images, onChange }: ProductImageUploaderP
                   className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-700 file:ml-3 file:rounded-lg file:border-0 file:bg-amber-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-amber-700 hover:file:bg-amber-200"
                 />
 
-                <p className="text-xs text-stone-400">الحد الأقصى 5MB. يتم الرفع داخل المجلد المرتبط بـ user_id الخاص بك.</p>
+                <p className="text-xs text-stone-400">الحد الأقصى 5MB.</p>
 
                 {uploadingIndex === index && (
                   <p className="text-xs text-amber-600">جارٍ رفع الصورة...</p>

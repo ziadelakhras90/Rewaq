@@ -68,6 +68,9 @@ export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
         router.push(redirectTo)
         router.refresh()
       } else {
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem('rewq-pending-signup-email', email.trim().toLowerCase())
+        }
         setSuccess(true)
       }
     } catch {
@@ -105,6 +108,10 @@ export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
       if (resendError) {
         setError(resendError.message)
         return
+      }
+
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('rewq-pending-signup-email', email.trim().toLowerCase())
       }
 
       setResendMessage('أعدنا إرسال رابط التأكيد. تحقق من بريدك الإلكتروني.')

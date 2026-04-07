@@ -46,7 +46,7 @@ export function AdminStatsCards({ stats }: AdminStatsCardsProps) {
         const inner = (
           <div className={`rounded-2xl p-5 transition ${card.accent}`}>
             <div className="mb-2 text-2xl">{card.icon}</div>
-            <p className="text-2xl font-bold">{card.value.toLocaleString('ar-SA')}</p>
+            <p className="text-2xl font-bold">{card.value.toLocaleString('ar-EG')}</p>
             <p className="mt-1 text-xs font-medium opacity-80">{card.label}</p>
           </div>
         )

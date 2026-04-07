@@ -127,7 +127,7 @@ export function CatalogPage({ searchParams, categories }: CatalogPageProps) {
               </h1>
               {result && !loading && (
                 <p className="mt-1 text-sm text-stone-500">
-                  {result.total.toLocaleString('ar-SA')} منتج
+                  {result.total.toLocaleString('ar-EG')} منتج
                 </p>
               )}
             </div>
