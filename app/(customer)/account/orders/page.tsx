@@ -11,7 +11,7 @@ import { getCustomerOrders } from '@/services/order.service'
 import { OrdersList }      from '@/components/account/orders-list'
 
 export const metadata: Metadata = {
-  title: 'طلباتي — Rewq',
+  title: 'مشترياتي — Rewq',
 }
 
 export default async function OrdersPage() {
@@ -30,7 +30,7 @@ export default async function OrdersPage() {
           <BackButton href="/marketplace" />
           <div className="flex items-center gap-4">
             <div>
-              <h1 className="text-xl font-bold text-stone-900">طلباتي</h1>
+              <h1 className="text-xl font-bold text-stone-900">مشترياتي</h1>
               <p className="text-sm text-stone-400">سجل جميع مشترياتك</p>
             </div>
           </div>

@@ -21,7 +21,7 @@ async function sendBrevoEmail(to: string, storeName: string, reason: string) {
       params: {
         store_name: storeName,
         reason,
-        reapply_link: appUrl ? `${appUrl}/become-seller` : '/become-seller',
+        reapply_link: appUrl ? `${appUrl}/become-seller?reapply=1` : '/become-seller?reapply=1',
       },
     }),
   })

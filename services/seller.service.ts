@@ -1,4 +1,3 @@
-import { generateStoreSlug } from '@/lib/utils/store-slug'
 import type { Database } from '@/types/database.types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
@@ -11,8 +10,10 @@ type OrderRow = Database['public']['Tables']['orders']['Row']
 export interface SellerApplicationFormValues {
   store_name: string
   store_description: string
-  phone: string
+  country: string
+  phone_local: string
   city: string
+  address_details: string
 }
 
 export interface SellerApplicationStatusResult {
@@ -27,8 +28,6 @@ export interface SellerDashboardStats {
   completedOrders: number
   lowStockCount: number
 }
-
-export { generateStoreSlug }
 
 export async function getSellerApplicationStatus(
   supabase: AppSupabaseClient,
@@ -53,39 +52,6 @@ export async function getSellerApplicationStatus(
     application: application ?? null,
     store: store ?? null,
   }
-}
-
-export async function submitSellerApplication(
-  supabase: AppSupabaseClient,
-  userId: string,
-  values: SellerApplicationFormValues,
-): Promise<{ success: true; application: SellerApplicationRow } | { success: false; error: string }> {
-  const payload = {
-    user_id: userId,
-    store_name: values.store_name.trim(),
-    store_description: values.store_description.trim() || null,
-    phone: values.phone.trim(),
-    city: values.city.trim(),
-  }
-
-  const { data, error } = await supabase
-    .from('seller_applications')
-    .insert(payload)
-    .select('*')
-    .single()
-
-  if (error || !data) {
-    const message = error?.message ?? ''
-    if (message.includes('one_pending_application_per_user')) {
-      return { success: false, error: 'لديك بالفعل طلب قيد المراجعة.' }
-    }
-    if (message.includes('one_approved_application_per_user')) {
-      return { success: false, error: 'تمت الموافقة على حسابك كبائع بالفعل.' }
-    }
-    return { success: false, error: 'تعذّر إرسال طلب الانضمام. حاول مرة أخرى.' }
-  }
-
-  return { success: true, application: data }
 }
 
 export async function getSellerDashboardStats(
@@ -200,6 +166,7 @@ export async function updateSellerStoreSettings(
     .single()
 
   if (error || !data) {
+    console.error('updateSellerStoreSettings error:', error)
     return { success: false, error: 'تعذّر تحديث بيانات المتجر.' }
   }
 
