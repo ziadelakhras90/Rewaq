@@ -46,7 +46,7 @@ export function SiteFooter() {
               <nav className="flex flex-col gap-2">
                 <FooterLink href="/auth/login">تسجيل الدخول</FooterLink>
                 <FooterLink href="/auth/signup">إنشاء حساب</FooterLink>
-                <FooterLink href="/account/orders">طلباتي</FooterLink>
+                <FooterLink href="/account/orders">مشترياتي</FooterLink>
               </nav>
             </div>
 

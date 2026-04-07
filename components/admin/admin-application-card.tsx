@@ -3,7 +3,6 @@
 // components/admin/admin-application-card.tsx
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { formatDate, getApplicationStatusLabel } from '@/lib/utils/arabic'
 import type { ApplicationWithProfile } from '@/services/admin.service'
 import type { ApproveSellerRequest, RejectSellerRequest } from '@/types/api.types'
@@ -21,7 +20,6 @@ const STATUS_CLASSES: Record<string, string> = {
 }
 
 export function AdminApplicationCard({ application, onStatusChange, isFocused = false }: AdminApplicationCardProps) {
-  const supabase = createClient()
   const isPending = application.status === 'pending'
 
   const [loading, setLoading] = useState<'approve' | 'reject' | null>(null)
@@ -37,11 +35,15 @@ export function AdminApplicationCard({ application, onStatusChange, isFocused = 
 
     try {
       const body: ApproveSellerRequest = { applicationId: application.id }
-      const { error: fnError } = await supabase.functions.invoke('approve-seller', { body })
+      const response = await fetch('/api/admin/seller-applications/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
 
-      if (fnError) {
-        const msg = (fnError as any)?.context?.error ?? (fnError as any)?.message ?? 'فشلت الموافقة. تحقق من صلاحياتك.'
-        setError(msg)
+      const payload = await response.json().catch(() => null)
+      if (!response.ok) {
+        setError(payload?.error ?? 'فشلت الموافقة. تحقق من صلاحياتك.')
         return
       }
 
@@ -111,7 +113,7 @@ export function AdminApplicationCard({ application, onStatusChange, isFocused = 
       <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-sm text-stone-600">
         <Detail label="المدينة" value={application.city} />
         <Detail label="الجوال" value={application.phone} />
-        {application.business_type && <Detail label="نوع النشاط" value={application.business_type} />}
+        {application.business_type && <Detail label="العنوان التفصيلي" value={application.business_type} />}
         {application.store_description && (
           <div className="col-span-2">
             <Detail label="وصف المتجر" value={application.store_description} />

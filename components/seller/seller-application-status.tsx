@@ -1,25 +1,35 @@
 import Link from 'next/link'
-import { APPLICATION_STATUS_LABELS, STORE_STATUS_LABELS, formatDateTime } from '@/lib/utils/arabic'
+import { formatDateTime } from '@/lib/utils/arabic'
 import type { Database } from '@/types/database.types'
 
 type SellerApplication = Database['public']['Tables']['seller_applications']['Row']
 type Store = Database['public']['Tables']['stores']['Row']
 
-interface SellerApplicationStatusProps {
-  application: SellerApplication | null
-  store?: Store | null
+const APPLICATION_STATUS_LABELS: Record<string, string> = {
+  pending: 'قيد المراجعة',
+  approved: 'مقبول',
+  rejected: 'مرفوض',
 }
 
-export function SellerApplicationStatus({ application, store }: SellerApplicationStatusProps) {
+const STORE_STATUS_LABELS: Record<string, string> = {
+  active: 'نشط',
+  suspended: 'معلّق',
+  closed: 'مغلق',
+}
+
+export function SellerApplicationStatus({
+  application,
+  store,
+}: {
+  application: SellerApplication | null
+  store: Store | null
+}) {
   if (!application) {
     return (
-      <div className="rounded-3xl border border-dashed border-stone-300 bg-white p-8 text-center shadow-sm">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-stone-100 text-stone-500">
-          <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4v16m8-8H4" /></svg>
-        </div>
-        <h2 className="text-lg font-bold text-stone-900">ابدأ رحلتك كبائع في Rewq</h2>
-        <p className="mt-2 text-sm leading-7 text-stone-500">قدّم طلب الانضمام، وبعد المراجعة ستتمكن من إضافة منتجاتك واستقبال الطلبات.</p>
-        <Link href="/become-seller" className="mt-6 inline-flex rounded-xl bg-amber-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-600">
+      <div className="rounded-3xl border border-dashed border-stone-200 bg-white p-10 text-center shadow-sm">
+        <h2 className="text-xl font-bold text-stone-900">لم ترسل طلب انضمام بعد</h2>
+        <p className="mt-2 text-sm leading-7 text-stone-500">ابدأ بطلب الانضمام وسنراجع بياناتك، ثم نفعّل لك مساحة البائع فور الموافقة.</p>
+        <Link href="/become-seller?reapply=1" className="mt-6 inline-flex rounded-xl bg-amber-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-600">
           قدّم الآن
         </Link>
       </div>
@@ -46,10 +56,11 @@ export function SellerApplicationStatus({ application, store }: SellerApplicatio
         </div>
 
         <dl className="mt-6 grid gap-4 sm:grid-cols-2">
-          <Info label="المدينة" value={application.city} />
+          <Info label="المحافظة" value={application.city} />
           <Info label="الجوال" value={application.phone} />
           <Info label="تاريخ التقديم" value={formatDateTime(application.created_at)} />
           {application.reviewed_at && <Info label="آخر مراجعة" value={formatDateTime(application.reviewed_at)} />}
+          {application.business_type && <Info label="العنوان التفصيلي" value={application.business_type} />}
         </dl>
 
         {application.store_description && (
@@ -69,7 +80,7 @@ export function SellerApplicationStatus({ application, store }: SellerApplicatio
           <div className="mt-5 space-y-3 rounded-2xl border border-rose-200 bg-rose-50 p-4">
             <p className="text-sm font-semibold text-rose-700">لم تتم الموافقة على الطلب الحالي.</p>
             {application.admin_notes && <p className="text-sm leading-7 text-rose-700">سبب الرفض: {application.admin_notes}</p>}
-            <Link href="/become-seller" className="inline-flex rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">
+            <Link href="/become-seller?reapply=1" className="inline-flex rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">
               إرسال طلب جديد
             </Link>
           </div>
@@ -88,8 +99,8 @@ export function SellerApplicationStatus({ application, store }: SellerApplicatio
             </span>
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Link href="/seller" className="rounded-xl bg-stone-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-stone-800">
-              الدخول إلى مساحة البائع
+            <Link href="/seller/orders" className="rounded-xl bg-stone-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-stone-800">
+              لوحة الطلبات
             </Link>
             <Link href="/seller/settings" className="rounded-xl border border-stone-200 px-4 py-2.5 text-sm font-semibold text-stone-700 hover:border-stone-300">
               إعدادات المتجر

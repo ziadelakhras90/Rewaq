@@ -68,7 +68,7 @@ export function AdminApplicationsList({ initialApplications, focusId }: AdminApp
 
   function exportCSV() {
     const rows: string[][] = []
-    rows.push(['اسم المتجر','مقدم الطلب','المدينة','الجوال','نوع النشاط','الحالة','ملاحظات الإدارة','تاريخ التقديم','تاريخ المراجعة'])
+    rows.push(['اسم المتجر','مقدم الطلب','المحافظة','الجوال','العنوان التفصيلي','الحالة','ملاحظات الإدارة','تاريخ التقديم','تاريخ المراجعة'])
     filtered.forEach((a) => {
       rows.push([
         a.store_name,
