@@ -6,19 +6,15 @@ import { generateStoreSlug } from '@/lib/utils/store-slug'
 import {
   EGYPT_GOVERNORATES,
   getCountryOption,
-  parseSellerStoredPhone,
   SELLER_COUNTRY_OPTIONS,
   validateSellerLocalPhone,
 } from '@/lib/utils/seller-form'
 import type { SellerApplicationFormValues } from '@/services/seller.service'
-import type { Database } from '@/types/database.types'
 
 interface SellerApplicationFormProps {
   userId: string
   initialValues?: Partial<SellerApplicationFormValues>
 }
-
-type SellerApplicationRow = Database['public']['Tables']['seller_applications']['Row']
 
 const EMPTY_VALUES: SellerApplicationFormValues = {
   store_name: '',
@@ -27,19 +23,6 @@ const EMPTY_VALUES: SellerApplicationFormValues = {
   phone_local: '',
   city: '',
   address_details: '',
-}
-
-export function mapApplicationToSellerFormValues(application: SellerApplicationRow): SellerApplicationFormValues {
-  const parsedPhone = parseSellerStoredPhone(application.phone)
-
-  return {
-    store_name: application.store_name ?? '',
-    store_description: application.store_description ?? '',
-    country: parsedPhone.country,
-    phone_local: parsedPhone.phone_local,
-    city: application.city ?? '',
-    address_details: application.business_type ?? '',
-  }
 }
 
 export function SellerApplicationForm({ userId, initialValues }: SellerApplicationFormProps) {
