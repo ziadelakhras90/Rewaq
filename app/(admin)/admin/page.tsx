@@ -9,7 +9,7 @@ import { AdminStatsCards }    from '@/components/admin/admin-stats-cards'
 import { OrderStatusBadge }   from '@/components/account/order-status-badge'
 import { formatDate, formatCurrency, getApplicationStatusLabel } from '@/lib/utils/arabic'
 
-export const metadata: Metadata = { title: 'لوحة الإدارة — رِواق' }
+export const metadata: Metadata = { title: 'لوحة الإدارة — Rewq' }
 
 export default async function AdminDashboardPage() {
   const data = await getDashboardData()

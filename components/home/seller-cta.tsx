@@ -23,12 +23,12 @@ export function SellerCTA() {
               <span className="text-sm font-medium text-amber-300">للبائعين</span>
             </div>
             <h2 className="text-3xl font-black leading-snug">
-              ابدأ البيع في رِواق
+              ابدأ البيع في Rewq
               <br />
               <span className="text-amber-400">وصل إلى آلاف المتسوقين</span>
             </h2>
             <p className="max-w-md text-base leading-relaxed text-stone-300">
-              سواء كان لديك متجر قائم أو تبدأ من الصفر، رِواق يمنحك الأدوات والمتسوقين لتنمو بثقة.
+              سواء كان لديك متجر قائم أو تبدأ من الصفر، Rewq يمنحك الأدوات والمتسوقين لتنمو بثقة.
             </p>
             <Link
               href="/become-seller"

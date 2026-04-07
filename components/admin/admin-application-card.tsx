@@ -1,7 +1,6 @@
 'use client'
 
 // components/admin/admin-application-card.tsx
-// بطاقة طلب بائع مع زري الموافقة والرفض
 
 import { useState }      from 'react'
 import { createClient }  from '@/lib/supabase/client'
@@ -10,7 +9,7 @@ import type { ApplicationWithProfile } from '@/services/admin.service'
 import type { ApproveSellerRequest, RejectSellerRequest } from '@/types/api.types'
 
 interface AdminApplicationCardProps {
-  application: ApplicationWithProfile
+  application:    ApplicationWithProfile
   onStatusChange: (id: string, newStatus: 'approved' | 'rejected') => void
 }
 
@@ -21,25 +20,29 @@ const STATUS_CLASSES: Record<string, string> = {
 }
 
 export function AdminApplicationCard({ application, onStatusChange }: AdminApplicationCardProps) {
-  const supabase    = createClient()
-  const isPending   = application.status === 'pending'
+  const supabase  = createClient()
+  const isPending = application.status === 'pending'
 
-  const [loading,   setLoading]   = useState<'approve' | 'reject' | null>(null)
+  const [loading,    setLoading]    = useState<'approve' | 'reject' | null>(null)
   const [showReject, setShowReject] = useState(false)
   const [rejectNote, setRejectNote] = useState('')
-  const [error,     setError]     = useState<string | null>(null)
+  const [error,      setError]      = useState<string | null>(null)
+  const [success,    setSuccess]    = useState<string | null>(null)
 
   async function handleApprove() {
     setLoading('approve')
     setError(null)
+    setSuccess(null)
     try {
       const body: ApproveSellerRequest = { applicationId: application.id }
       const { error: fnError } = await supabase.functions.invoke('approve-seller', { body })
       if (fnError) {
-        const msg = (fnError as any)?.context?.error ?? (fnError as any)?.message ?? 'فشل الموافقة'
+        const msg = (fnError as any)?.context?.error ?? (fnError as any)?.message ?? 'فشلت الموافقة. تحقق من صلاحياتك.'
         setError(msg)
         return
       }
+      setSuccess('تمت الموافقة على الطلب بنجاح ✓')
+      setTimeout(() => setSuccess(null), 3000)
       onStatusChange(application.id, 'approved')
     } catch {
       setError('تعذّر الاتصال. حاول مجددًا.')
@@ -52,14 +55,17 @@ export function AdminApplicationCard({ application, onStatusChange }: AdminAppli
     if (!rejectNote.trim()) { setError('سبب الرفض مطلوب'); return }
     setLoading('reject')
     setError(null)
+    setSuccess(null)
     try {
       const body: RejectSellerRequest = { applicationId: application.id, adminNotes: rejectNote.trim() }
       const { error: fnError } = await supabase.functions.invoke('reject-seller', { body })
       if (fnError) {
-        const msg = (fnError as any)?.context?.error ?? (fnError as any)?.message ?? 'فشل الرفض'
+        const msg = (fnError as any)?.context?.error ?? (fnError as any)?.message ?? 'فشل الرفض. تحقق من صلاحياتك.'
         setError(msg)
         return
       }
+      setSuccess('تم رفض الطلب ✓')
+      setTimeout(() => setSuccess(null), 3000)
       onStatusChange(application.id, 'rejected')
       setShowReject(false)
     } catch {
@@ -70,19 +76,18 @@ export function AdminApplicationCard({ application, onStatusChange }: AdminAppli
   }
 
   return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-5 space-y-4">
+    <div className="rounded-2xl border border-stone-200 bg-white p-5 space-y-4 transition hover:border-stone-300">
 
-      {/* ── Header row ────────────────────────────────────────────────── */}
+      {/* ── Header ────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="font-semibold text-stone-800">{application.store_name}</p>
-          <p className="text-xs text-stone-400 mt-0.5">
-            {application.profiles?.full_name ?? '—'}
-            {' · '}
-            {formatDate(application.created_at)}
+          <p className="mt-0.5 text-xs text-stone-400">
+            {application.profiles?.full_name ?? '—'} · {formatDate(application.created_at)}
           </p>
         </div>
-        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_CLASSES[application.status] ?? 'bg-stone-100 text-stone-600'}`}>
+        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+          ${STATUS_CLASSES[application.status] ?? 'bg-stone-100 text-stone-600'}`}>
           {getApplicationStatusLabel(application.status)}
         </span>
       </div>
@@ -104,9 +109,18 @@ export function AdminApplicationCard({ application, onStatusChange }: AdminAppli
         )}
       </div>
 
+      {/* ── Success ───────────────────────────────────────────────────── */}
+      {success && (
+        <p className="text-xs text-emerald-700 rounded-lg bg-emerald-50 px-3 py-2 border border-emerald-200">
+          {success}
+        </p>
+      )}
+
       {/* ── Error ─────────────────────────────────────────────────────── */}
       {error && (
-        <p className="text-xs text-rose-600 rounded-lg bg-rose-50 px-3 py-2">{error}</p>
+        <p className="text-xs text-rose-600 rounded-lg bg-rose-50 px-3 py-2 border border-rose-200">
+          {error}
+        </p>
       )}
 
       {/* ── Reject form ───────────────────────────────────────────────── */}
@@ -117,48 +131,31 @@ export function AdminApplicationCard({ application, onStatusChange }: AdminAppli
             onChange={(e) => { setRejectNote(e.target.value); setError(null) }}
             placeholder="سبب الرفض (مطلوب)..."
             rows={2}
-            className="
-              w-full resize-none rounded-xl border border-stone-200 bg-stone-50
-              px-3 py-2 text-sm text-stone-700 placeholder:text-stone-400
-              focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-400/20
-              transition
-            "
+            className="w-full resize-none rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-700 placeholder:text-stone-400 focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-400/20 transition"
           />
           <div className="flex gap-2">
-            <button
-              onClick={handleReject}
-              disabled={loading === 'reject'}
-              className="flex-1 rounded-xl bg-rose-500 py-2 text-sm font-semibold text-white hover:bg-rose-600 disabled:opacity-50 transition"
-            >
+            <button onClick={handleReject} disabled={loading === 'reject'}
+              className="flex-1 rounded-xl bg-rose-500 py-2 text-sm font-semibold text-white hover:bg-rose-600 disabled:opacity-50 transition">
               {loading === 'reject' ? 'جاري الرفض…' : 'تأكيد الرفض'}
             </button>
-            <button
-              onClick={() => { setShowReject(false); setError(null) }}
-              disabled={Boolean(loading)}
-              className="rounded-xl border border-stone-200 px-4 py-2 text-sm text-stone-600 hover:bg-stone-50 transition"
-            >
+            <button onClick={() => { setShowReject(false); setError(null) }} disabled={Boolean(loading)}
+              className="rounded-xl border border-stone-200 px-4 py-2 text-sm text-stone-600 hover:bg-stone-50 transition">
               إلغاء
             </button>
           </div>
         </div>
       )}
 
-      {/* ── Action buttons — only for pending ────────────────────────── */}
+      {/* ── Action buttons ────────────────────────────────────────────── */}
       {isPending && !showReject && (
         <div className="flex gap-2 pt-1">
-          <button
-            onClick={handleApprove}
-            disabled={Boolean(loading)}
-            className="flex-1 rounded-xl bg-emerald-500 py-2.5 text-sm font-bold text-white hover:bg-emerald-600 disabled:opacity-50 active:scale-95 transition"
-          >
-            {loading === 'approve' ? 'جاري الموافقة…' : 'موافقة'}
+          <button onClick={handleApprove} disabled={Boolean(loading)}
+            className="flex-1 rounded-xl bg-emerald-500 py-2.5 text-sm font-bold text-white hover:bg-emerald-600 disabled:opacity-50 active:scale-95 transition">
+            {loading === 'approve' ? 'جاري الموافقة…' : '✓ موافقة'}
           </button>
-          <button
-            onClick={() => { setShowReject(true); setError(null) }}
-            disabled={Boolean(loading)}
-            className="flex-1 rounded-xl border border-rose-200 bg-rose-50 py-2.5 text-sm font-bold text-rose-600 hover:bg-rose-100 disabled:opacity-50 transition"
-          >
-            رفض
+          <button onClick={() => { setShowReject(true); setError(null) }} disabled={Boolean(loading)}
+            className="flex-1 rounded-xl border border-rose-200 bg-rose-50 py-2.5 text-sm font-bold text-rose-600 hover:bg-rose-100 disabled:opacity-50 transition">
+            ✕ رفض
           </button>
         </div>
       )}

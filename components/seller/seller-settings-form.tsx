@@ -50,7 +50,7 @@ export function SellerSettingsForm({ store }: { store: Store }) {
     <form onSubmit={handleSubmit} dir="rtl" className="space-y-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
       <div>
         <h1 className="text-xl font-bold text-stone-900">إعدادات المتجر</h1>
-        <p className="mt-1 text-sm text-stone-500">حدّث البيانات الأساسية التي تظهر لعملائك داخل رِواق.</p>
+        <p className="mt-1 text-sm text-stone-500">حدّث البيانات الأساسية التي تظهر لعملائك داخل Rewq.</p>
       </div>
 
       {message && <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div>}

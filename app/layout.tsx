@@ -12,15 +12,15 @@ import { getServerAppUrl } from '@/lib/utils/app-url'
 
 export const metadata: Metadata = {
   title: {
-    default: 'رِواق | Riwaq — سوق إلكتروني عربي',
-    template: '%s | رِواق',
+    default: 'Rewq | Rewq — سوق إلكتروني عربي',
+    template: '%s | Rewq',
   },
-  description: 'تسوّق من أفضل المتاجر العربية في مكان واحد. منصة رِواق للتجارة الإلكترونية متعددة البائعين.',
+  description: 'تسوّق من أفضل المتاجر العربية في مكان واحد. منصة Rewq للتجارة الإلكترونية متعددة البائعين.',
   metadataBase: new URL(getServerAppUrl()),
   openGraph: {
     type: 'website',
     locale: 'ar_SA',
-    siteName: 'رِواق | Riwaq',
+    siteName: 'Rewq | Rewq',
   },
   robots: {
     index: true,

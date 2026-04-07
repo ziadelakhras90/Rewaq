@@ -10,7 +10,7 @@ import { SellerNav } from '@/components/seller/seller-nav'
 import { formatCurrency, formatDateTime } from '@/lib/utils/arabic'
 
 export const metadata: Metadata = {
-  title: 'مساحة البائع — رِواق',
+  title: 'مساحة البائع — Rewq',
 }
 
 export default async function SellerDashboardPage() {

@@ -10,7 +10,7 @@ import { getCustomerOrders } from '@/services/order.service'
 import { OrdersList }      from '@/components/account/orders-list'
 
 export const metadata: Metadata = {
-  title: 'طلباتي — رِواق',
+  title: 'طلباتي — Rewq',
 }
 
 export default async function OrdersPage() {

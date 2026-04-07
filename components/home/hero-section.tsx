@@ -35,7 +35,7 @@ export function HeroSection() {
 
           {/* Subtext */}
           <p className="max-w-lg text-lg leading-relaxed text-stone-500">
-            رِواق يجمع في مكان واحد متاجر موثوقة وبائعين متميزين، لتجد ما تحتاج بكل سهولة وأمان.
+            Rewq يجمع في مكان واحد متاجر موثوقة وبائعين متميزين، لتجد ما تحتاج بكل سهولة وأمان.
           </p>
 
           {/* CTAs */}

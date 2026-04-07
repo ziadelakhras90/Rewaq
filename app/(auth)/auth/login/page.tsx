@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { LoginForm } from '@/components/auth/login-form'
 
 export const metadata: Metadata = {
-  title: 'تسجيل الدخول — رِواق',
+  title: 'تسجيل الدخول — Rewq',
 }
 
 interface PageProps {
@@ -29,7 +29,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <Link href="/" className="text-2xl font-bold text-stone-900 hover:text-amber-600 transition">
-            رِواق
+            Rewq
           </Link>
           <h1 className="mt-3 text-xl font-bold text-stone-900">تسجيل الدخول</h1>
           <p className="mt-1 text-sm text-stone-500">أهلًا بك مجددًا</p>

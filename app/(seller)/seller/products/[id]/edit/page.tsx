@@ -11,7 +11,7 @@ interface PageProps {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: 'تعديل المنتج — رِواق' }
+  return { title: 'تعديل المنتج — Rewq' }
 }
 
 export default async function EditSellerProductPage({ params }: PageProps) {

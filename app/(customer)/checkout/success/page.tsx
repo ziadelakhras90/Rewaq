@@ -8,7 +8,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
-  title: 'تم استلام طلبك — رِواق',
+  title: 'تم استلام طلبك — Rewq',
 }
 
 interface PageProps {
@@ -33,7 +33,7 @@ export default async function CheckoutSuccessPage({ searchParams }: PageProps) {
 
         <h1 className="text-2xl font-bold text-stone-900">تم استلام طلبك!</h1>
         <p className="mt-2 text-sm leading-relaxed text-stone-500">
-          شكرًا لتسوّقك في رِواق. سيتواصل معك البائع قريبًا لتأكيد التوصيل.
+          شكرًا لتسوّقك في Rewq. سيتواصل معك البائع قريبًا لتأكيد التوصيل.
         </p>
 
         <div className="mt-6 rounded-2xl border border-stone-200 bg-white px-6 py-5">

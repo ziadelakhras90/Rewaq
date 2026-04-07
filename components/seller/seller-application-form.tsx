@@ -84,11 +84,15 @@ export function SellerApplicationForm({ userId }: SellerApplicationFormProps) {
         <input name="store_name" value={values.store_name} onChange={handleChange} placeholder="مثال: بيت القهوة" className={inputClass(Boolean(errors.store_name))} />
       </Field>
 
-      <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
-        <p className="text-xs font-medium text-stone-400">معاينة الرابط</p>
-        <p className="mt-1 text-sm font-semibold text-stone-700" dir="ltr">Riwaq.store/{slugPreview || 'your-store'}</p>
-        <p className="mt-1 text-xs text-stone-400">سيُنشأ الرابط النهائي تلقائيًا عند الموافقة ويمكنك تعديله لاحقًا من إعدادات المتجر.</p>
-      </div>
+      {values.store_name.trim() && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-xs font-medium text-amber-600">معاينة الرابط</p>
+          <p className="mt-1 font-mono text-sm font-semibold text-stone-700" dir="ltr">
+            rewq.store/{slugPreview}
+          </p>
+          <p className="mt-1 text-xs text-stone-500">يمكنك تعديل الرابط بعد الموافقة من إعدادات المتجر.</p>
+        </div>
+      )}
 
       <Field label="نبذة عن المتجر">
         <textarea name="store_description" value={values.store_description} onChange={handleChange} rows={4} placeholder="ما الذي تبيعه؟ وما الذي يميز متجرك؟" className={textareaClass} />

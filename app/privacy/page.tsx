@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'سياسة الخصوصية — رِواق',
-  description: 'كيف تتعامل رِواق مع بيانات المستخدمين وحمايتها.',
+  title: 'سياسة الخصوصية — Rewq',
+  description: 'كيف تتعامل Rewq مع بيانات المستخدمين وحمايتها.',
 }
 
 export default function PrivacyPage() {
@@ -12,7 +12,7 @@ export default function PrivacyPage() {
       <div className="mx-auto max-w-3xl rounded-3xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
         <h1 className="text-2xl font-black text-stone-900">سياسة الخصوصية</h1>
         <p className="mt-4 text-sm leading-7 text-stone-600">
-          تحترم <strong>رِواق</strong> خصوصيتك وتستخدم بياناتك لتشغيل الطلبات والحسابات وتحسين التجربة فقط ضمن حدود الخدمة.
+          تحترم <strong>Rewq</strong> خصوصيتك وتستخدم بياناتك لتشغيل الطلبات والحسابات وتحسين التجربة فقط ضمن حدود الخدمة.
         </p>
         <div className="mt-6 space-y-5 text-sm leading-7 text-stone-600">
           <section>
@@ -33,7 +33,7 @@ export default function PrivacyPage() {
             شروط الاستخدام
           </Link>
           <Link href="/" className="rounded-xl bg-stone-900 px-4 py-2 text-sm font-semibold text-white hover:bg-stone-800">
-            العودة إلى رِواق
+            العودة إلى Rewq
           </Link>
         </div>
       </div>

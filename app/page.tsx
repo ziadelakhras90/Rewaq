@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'
 // app/page.tsx
-// الصفحة الرئيسية لـ رِواق
+// الصفحة الرئيسية لـ Rewq
 // Server Component — يجلب البيانات ويُمرّرها لأقسام الصفحة
 
 import type { Metadata }          from 'next'
@@ -15,8 +15,8 @@ import { createClient }           from '@/lib/supabase/server'
 import { getFeaturedProducts, getActiveCategories } from '@/services/catalog.service'
 
 export const metadata: Metadata = {
-  title: 'رِواق | Riwaq — سوق إلكتروني عربي',
-  description: 'تسوّق من أفضل المتاجر العربية في مكان واحد. منصة رِواق للتجارة الإلكترونية متعددة البائعين.',
+  title: 'Rewq — سوق إلكتروني عربي',
+  description: 'تسوّق من أفضل المتاجر العربية في مكان واحد. منصة Rewq للتجارة الإلكترونية متعددة البائعين.',
 }
 
 export default async function HomePage() {

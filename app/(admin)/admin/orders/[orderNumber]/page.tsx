@@ -23,7 +23,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { orderNumber } = await params
-  return { title: `طلب ${orderNumber} — لوحة إدارة رِواق` }
+  return { title: `طلب ${orderNumber} — لوحة إدارة Rewq` }
 }
 
 export default async function AdminOrderDetailsPage({ params }: PageProps) {

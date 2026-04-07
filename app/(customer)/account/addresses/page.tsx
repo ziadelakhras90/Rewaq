@@ -10,7 +10,7 @@ import { AddressList } from '@/components/account/address-list'
 import type { CustomerAddress } from '@/services/address.service'
 
 export const metadata: Metadata = {
-  title: 'عناويني — رِواق',
+  title: 'عناويني — Rewq',
 }
 
 interface PageProps {

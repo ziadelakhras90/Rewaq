@@ -77,7 +77,7 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <Link href="/" className="text-2xl font-bold text-stone-900 hover:text-amber-600 transition">
-            رِواق
+            Rewq
           </Link>
           <h1 className="mt-3 text-xl font-bold text-stone-900">نسيت كلمة المرور؟</h1>
           <p className="mt-1 text-sm text-stone-500">أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين</p>

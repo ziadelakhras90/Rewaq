@@ -9,7 +9,7 @@ import { CheckoutForm }   from '@/components/checkout/checkout-form'
 import type { Address }   from '@/components/checkout/address-selector'
 
 export const metadata: Metadata = {
-  title: 'إتمام الطلب — رِواق',
+  title: 'إتمام الطلب — Rewq',
 }
 
 export default async function CheckoutPage() {

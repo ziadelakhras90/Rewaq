@@ -9,8 +9,8 @@ import { getActiveCategories } from '@/services/catalog.service'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
-  title: 'تصفح المنتجات — رِواق',
-  description: 'اكتشف منتجات مميزة من متاجر عربية متنوعة في رِواق',
+  title: 'تصفح المنتجات — Rewq',
+  description: 'اكتشف منتجات مميزة من متاجر عربية متنوعة في Rewq',
 }
 
 interface PageProps {

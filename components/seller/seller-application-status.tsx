@@ -17,7 +17,7 @@ export function SellerApplicationStatus({ application, store }: SellerApplicatio
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-stone-100 text-stone-500">
           <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4v16m8-8H4" /></svg>
         </div>
-        <h2 className="text-lg font-bold text-stone-900">ابدأ رحلتك كبائع في رِواق</h2>
+        <h2 className="text-lg font-bold text-stone-900">ابدأ رحلتك كبائع في Rewq</h2>
         <p className="mt-2 text-sm leading-7 text-stone-500">قدّم طلب الانضمام، وبعد المراجعة ستتمكن من إضافة منتجاتك واستقبال الطلبات.</p>
         <Link href="/become-seller" className="mt-6 inline-flex rounded-xl bg-amber-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-600">
           قدّم الآن

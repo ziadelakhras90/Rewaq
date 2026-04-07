@@ -7,7 +7,7 @@ import { SellerNav } from '@/components/seller/seller-nav'
 import { SellerSettingsForm } from '@/components/seller/seller-settings-form'
 
 export const metadata: Metadata = {
-  title: 'إعدادات المتجر — رِواق',
+  title: 'إعدادات المتجر — Rewq',
 }
 
 export default async function SellerSettingsPage() {

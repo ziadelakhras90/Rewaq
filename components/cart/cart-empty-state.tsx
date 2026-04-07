@@ -16,7 +16,7 @@ export function CartEmptyState() {
       <div className="space-y-2">
         <h2 className="text-lg font-bold text-stone-800">سلتك فارغة</h2>
         <p className="max-w-xs text-sm leading-relaxed text-stone-400">
-          ابدأ بتصفح المنتجات واختر ما يعجبك من متاجر رِواق المتنوعة
+          ابدأ بتصفح المنتجات واختر ما يعجبك من متاجر Rewq المتنوعة
         </p>
       </div>
 

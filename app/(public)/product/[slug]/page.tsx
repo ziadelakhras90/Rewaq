@@ -20,10 +20,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const supabase = await createClient()
   const product = await getProductBySlug(supabase, slug)
 
-  if (!product) return { title: 'منتج غير موجود — رِواق' }
+  if (!product) return { title: 'منتج غير موجود — Rewq' }
 
   return {
-    title: `${product.name} — رِواق`,
+    title: `${product.name} — Rewq`,
     description: product.description ?? `${product.name} من متجر ${(product as any).stores?.name}`,
   }
 }

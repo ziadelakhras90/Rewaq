@@ -5,7 +5,7 @@ import type { Metadata }       from 'next'
 import { getAdminSellers }     from '@/services/admin.service'
 import { AdminSellersTable }   from '@/components/admin/admin-sellers-table'
 
-export const metadata: Metadata = { title: 'البائعون — لوحة إدارة رِواق' }
+export const metadata: Metadata = { title: 'البائعون — لوحة إدارة Rewq' }
 
 export default async function AdminSellersPage() {
   const sellers = await getAdminSellers()

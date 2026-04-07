@@ -62,7 +62,7 @@ export function CartConflictModal({
           سلتك تحتوي منتجات من متجر آخر
         </h3>
         <p className="mt-2 text-sm leading-relaxed text-stone-500">
-          رِواق يدعم طلبًا واحدًا من متجر واحد في كل مرة.
+          Rewq يدعم طلبًا واحدًا من متجر واحد في كل مرة.
           هل تريد إفراغ السلة وإضافة «{productName}» بدلًا من ذلك؟
         </p>
 

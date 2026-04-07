@@ -7,7 +7,7 @@ import { SellerNav } from '@/components/seller/seller-nav'
 import { ProductForm } from '@/components/seller/product-form'
 
 export const metadata: Metadata = {
-  title: 'إضافة منتج — رِواق',
+  title: 'إضافة منتج — Rewq',
 }
 
 export default async function NewSellerProductPage() {

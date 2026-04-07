@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { SignupForm } from '@/components/auth/signup-form'
 
 export const metadata: Metadata = {
-  title: 'إنشاء حساب — رِواق',
+  title: 'إنشاء حساب — Rewq',
 }
 
 interface PageProps {
@@ -25,10 +25,10 @@ export default async function SignupPage({ searchParams }: PageProps) {
         {/* ── Brand ────────────────────────────────────────────────────── */}
         <div className="mb-8 text-center">
           <Link href="/" className="text-2xl font-bold text-stone-900 hover:text-amber-600 transition">
-            رِواق
+            Rewq
           </Link>
           <h1 className="mt-3 text-xl font-bold text-stone-900">إنشاء حساب جديد</h1>
-          <p className="mt-1 text-sm text-stone-500">انضم إلى رِواق وابدأ التسوق</p>
+          <p className="mt-1 text-sm text-stone-500">انضم إلى Rewq وابدأ التسوق</p>
         </div>
 
         {/* ── Card ─────────────────────────────────────────────────────── */}

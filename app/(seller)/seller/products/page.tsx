@@ -8,7 +8,7 @@ import { SellerNav } from '@/components/seller/seller-nav'
 import { SellerProductsTable } from '@/components/seller/seller-products-table'
 
 export const metadata: Metadata = {
-  title: 'منتجاتي — رِواق',
+  title: 'منتجاتي — Rewq',
 }
 
 interface PageProps {

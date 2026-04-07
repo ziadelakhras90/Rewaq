@@ -6,7 +6,7 @@ import { getSellerApplicationStatus } from '@/services/seller.service'
 import { SellerApplicationStatus } from '@/components/seller/seller-application-status'
 
 export const metadata: Metadata = {
-  title: 'حالة طلب البائع — رِواق',
+  title: 'حالة طلب البائع — Rewq',
 }
 
 export default async function SellerStatusPage() {
@@ -29,7 +29,7 @@ export default async function SellerStatusPage() {
       <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-stone-900">حالة الطلب</h1>
-          <p className="mt-1 text-sm text-stone-500">تابع حالة طلب الانضمام كبائع في رِواق.</p>
+          <p className="mt-1 text-sm text-stone-500">تابع حالة طلب الانضمام كبائع في Rewq.</p>
         </div>
 
         <SellerApplicationStatus application={application} store={store} />

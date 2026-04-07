@@ -14,7 +14,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { orderNumber } = await params
-  return { title: `طلب ${orderNumber} — رِواق` }
+  return { title: `طلب ${orderNumber} — Rewq` }
 }
 
 export default async function SellerOrderDetailsPage({ params }: PageProps) {

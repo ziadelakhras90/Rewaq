@@ -9,7 +9,7 @@ import { SellerOrdersList } from '@/components/seller/seller-orders-list'
 import type { OrderStatus } from '@/types/api.types'
 
 export const metadata: Metadata = {
-  title: 'طلبات المتجر — رِواق',
+  title: 'طلبات المتجر — Rewq',
 }
 
 interface PageProps {

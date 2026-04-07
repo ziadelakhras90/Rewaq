@@ -200,7 +200,7 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <Link href="/" className="text-2xl font-bold text-stone-900 hover:text-amber-600 transition">
-            رِواق
+            Rewq
           </Link>
           <h1 className="mt-3 text-xl font-bold text-stone-900">تعيين كلمة مرور جديدة</h1>
           <p className="mt-1 text-sm text-stone-500">اختر كلمة مرور قوية لحسابك</p>

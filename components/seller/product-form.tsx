@@ -120,7 +120,7 @@ export function ProductForm({ storeId, categories, existing }: ProductFormProps)
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-stone-900">{isEdit ? 'تعديل المنتج' : 'إضافة منتج جديد'}</h1>
-          <p className="mt-1 text-sm text-stone-500">أدخل البيانات الأساسية للمنتج كما ستظهر للعميل داخل رِواق.</p>
+          <p className="mt-1 text-sm text-stone-500">أدخل البيانات الأساسية للمنتج كما ستظهر للعميل داخل Rewq.</p>
         </div>
         <div className="rounded-2xl bg-stone-50 px-4 py-3 text-xs text-stone-500" dir="ltr">
           /product/{slugPreview || 'your-product'}

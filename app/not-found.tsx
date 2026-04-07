@@ -5,7 +5,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'الصفحة غير موجودة — رِواق',
+  title: 'الصفحة غير موجودة — Rewq',
 }
 
 export default function NotFound() {

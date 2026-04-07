@@ -14,7 +14,7 @@ export function SiteFooter() {
           {/* Brand */}
           <div className="space-y-2">
             <Link href="/" className="text-xl font-black text-stone-900">
-              رِواق
+              Rewq
             </Link>
             <p className="max-w-xs text-sm leading-relaxed text-stone-400">
               سوق إلكتروني عربي يجمع أفضل البائعين والمتسوقين في مكان واحد.
@@ -55,7 +55,7 @@ export function SiteFooter() {
 
         {/* ── Bottom bar ────────────────────────────────────────────────── */}
         <div className="flex flex-col items-center justify-between gap-2 border-t border-stone-100 py-5 text-xs text-stone-400 sm:flex-row">
-          <p>© {new Date().getFullYear()} رِواق — جميع الحقوق محفوظة</p>
+          <p>© {new Date().getFullYear()} Rewq — جميع الحقوق محفوظة</p>
           <div className="flex gap-4">
             <FooterLink href="/terms">شروط الاستخدام</FooterLink>
             <FooterLink href="/privacy">الخصوصية</FooterLink>

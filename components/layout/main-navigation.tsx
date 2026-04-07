@@ -1,17 +1,16 @@
 'use client'
 
 // components/layout/main-navigation.tsx
-// روابط التنقل الرئيسية — Client Component للتحقق من حالة الـ auth
 
-import Link      from 'next/link'
-import { usePathname } from 'next/navigation'
-import { useAuth }     from '@/hooks/useAuth'
-import { useCart }     from '@/hooks/useCart'
+import { useState, useRef, useEffect } from 'react'
+import Link        from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
+import { useCart } from '@/hooks/useCart'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter }    from 'next/navigation'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Desktop nav — يُستخدم في SiteHeader
+// Desktop Nav
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function DesktopNav() {
@@ -29,16 +28,23 @@ export function DesktopNav() {
   return (
     <div className="flex items-center gap-1">
 
-      {/* ── Nav links ───────────────────────────────────────────────── */}
-      <NavLink href="/">الرئيسية</NavLink>
+      {/* ── Home icon ──────────────────────────────────────────────────── */}
+      <Link
+        href="/"
+        className="flex h-9 w-9 items-center justify-center rounded-xl text-stone-500 hover:bg-stone-100 hover:text-stone-800 transition"
+        aria-label="الرئيسية"
+      >
+        <HomeIcon />
+      </Link>
+
       <NavLink href="/marketplace">المتجر</NavLink>
-      {!isSeller && <NavLink href="/become-seller">كن بائعًا</NavLink>}
-      {isSeller  && <NavLink href="/seller">لوحة البائع</NavLink>}
-      {isAdmin   && <NavLink href="/admin">الإدارة</NavLink>}
+      {!loading && !isSeller && <NavLink href="/become-seller">كن بائعًا</NavLink>}
+      {!loading && isSeller  && <NavLink href="/seller">لوحة البائع</NavLink>}
+      {!loading && isAdmin   && <NavLink href="/admin">الإدارة</NavLink>}
 
       <div className="mx-2 h-5 w-px bg-stone-200" />
 
-      {/* ── Cart ────────────────────────────────────────────────────── */}
+      {/* ── Cart ────────────────────────────────────────────────────────── */}
       <Link
         href="/cart"
         className="relative flex h-9 w-9 items-center justify-center rounded-xl text-stone-600 hover:bg-stone-100 transition"
@@ -52,19 +58,11 @@ export function DesktopNav() {
         )}
       </Link>
 
-      {/* ── Auth ────────────────────────────────────────────────────── */}
+      {/* ── Auth / Profile ─────────────────────────────────────────────── */}
       {!loading && (
         <>
           {user ? (
-            <div className="flex items-center gap-1">
-              <NavLink href="/account/orders">طلباتي</NavLink>
-              <button
-                onClick={handleSignOut}
-                className="rounded-xl px-3 py-2 text-sm text-stone-500 hover:bg-stone-100 hover:text-stone-700 transition"
-              >
-                خروج
-              </button>
-            </div>
+            <UserMenu user={user} isSeller={isSeller} isAdmin={isAdmin} onSignOut={handleSignOut} />
           ) : (
             <div className="flex items-center gap-2">
               <Link
@@ -88,7 +86,134 @@ export function DesktopNav() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Mobile nav drawer — يُستخدم في SiteHeader
+// UserMenu — Profile dropdown
+// ─────────────────────────────────────────────────────────────────────────────
+
+import type { User } from '@supabase/supabase-js'
+
+function UserMenu({
+  user,
+  isSeller,
+  isAdmin,
+  onSignOut,
+}: {
+  user:      User
+  isSeller:  boolean
+  isAdmin:   boolean
+  onSignOut: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  // إغلاق عند الضغط خارج الـ dropdown
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const displayName = (user.user_metadata?.full_name as string | undefined)
+    ?? user.email?.split('@')[0]
+    ?? 'المستخدم'
+  const initials = displayName.slice(0, 2)
+  const accountType = isAdmin ? 'مدير المنصة' : isSeller ? 'بائع' : 'مشتري'
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-9 items-center gap-2 rounded-xl border border-stone-200 bg-white px-2.5 hover:border-stone-300 hover:bg-stone-50 transition"
+      >
+        {/* Avatar */}
+        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-700">
+          {initials}
+        </div>
+        <span className="max-w-[80px] truncate text-xs font-medium text-stone-700">
+          {displayName}
+        </span>
+        <svg className={`h-3.5 w-3.5 text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute end-0 top-11 z-50 w-64 rounded-2xl border border-stone-200 bg-white shadow-xl">
+
+          {/* Profile header */}
+          <div className="border-b border-stone-100 px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-bold text-amber-700">
+                {initials}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-stone-800">{displayName}</p>
+                <p className="truncate text-xs text-stone-400">{user.email}</p>
+                <span className="mt-0.5 inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                  {accountType}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Links */}
+          <nav className="p-1.5 space-y-0.5">
+            <DropdownLink href="/account/orders" icon={<OrdersIcon />} onClick={() => setOpen(false)}>
+              طلباتي
+            </DropdownLink>
+            <DropdownLink href="/account/addresses" icon={<AddressIcon />} onClick={() => setOpen(false)}>
+              عناوين التوصيل
+            </DropdownLink>
+            {isSeller && (
+              <DropdownLink href="/seller" icon={<StoreIcon />} onClick={() => setOpen(false)}>
+                لوحة البائع
+              </DropdownLink>
+            )}
+            {isAdmin && (
+              <DropdownLink href="/admin" icon={<AdminIcon />} onClick={() => setOpen(false)}>
+                لوحة الإدارة
+              </DropdownLink>
+            )}
+          </nav>
+
+          <div className="border-t border-stone-100 p-1.5">
+            <button
+              onClick={() => { setOpen(false); onSignOut() }}
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-rose-600 hover:bg-rose-50 transition"
+            >
+              <SignOutIcon />
+              تسجيل الخروج
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function DropdownLink({
+  href, icon, children, onClick,
+}: {
+  href: string; icon: React.ReactNode; children: React.ReactNode; onClick: () => void
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-stone-700 hover:bg-stone-50 transition"
+    >
+      <span className="text-stone-400">{icon}</span>
+      {children}
+    </Link>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Mobile Nav
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function MobileNav({ onClose }: { onClose: () => void }) {
@@ -96,6 +221,11 @@ export function MobileNav({ onClose }: { onClose: () => void }) {
   const { itemCount } = useCart(user?.id ?? null)
   const supabase = createClient()
   const router   = useRouter()
+
+  const displayName = (user?.user_metadata?.full_name as string | undefined)
+    ?? user?.email?.split('@')[0]
+    ?? 'المستخدم'
+  const accountType = isAdmin ? 'مدير المنصة' : isSeller ? 'بائع' : 'مشتري'
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -105,46 +235,93 @@ export function MobileNav({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <nav dir="rtl" className="flex flex-col divide-y divide-stone-100">
+    <nav dir="rtl" className="flex flex-col">
 
-      <MobileNavLink href="/"             onClick={onClose}>الرئيسية</MobileNavLink>
-      <MobileNavLink href="/marketplace"  onClick={onClose}>المتجر</MobileNavLink>
-      {!isSeller && <MobileNavLink href="/become-seller" onClick={onClose}>كن بائعًا</MobileNavLink>}
-      {isSeller  && <MobileNavLink href="/seller"        onClick={onClose}>لوحة البائع</MobileNavLink>}
-      {isAdmin   && <MobileNavLink href="/admin"         onClick={onClose}>الإدارة</MobileNavLink>}
-
-      <MobileNavLink href="/cart" onClick={onClose}>
-        <span className="flex items-center gap-2">
-          السلة
-          {itemCount > 0 && (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-xs font-bold text-white">
-              {itemCount > 9 ? '9+' : itemCount}
-            </span>
-          )}
-        </span>
-      </MobileNavLink>
-
-      {!loading && (
-        <>
-          {user ? (
-            <>
-              <MobileNavLink href="/account/orders" onClick={onClose}>طلباتي</MobileNavLink>
-              <button
-                onClick={handleSignOut}
-                className="px-5 py-4 text-start text-sm text-rose-500 hover:bg-rose-50 transition"
-              >
-                تسجيل الخروج
-              </button>
-            </>
-          ) : (
-            <>
-              <MobileNavLink href="/auth/login"  onClick={onClose}>تسجيل الدخول</MobileNavLink>
-              <MobileNavLink href="/auth/signup" onClick={onClose}>إنشاء حساب</MobileNavLink>
-            </>
-          )}
-        </>
+      {/* Profile block للمسجل دخول */}
+      {!loading && user && (
+        <div className="border-b border-stone-100 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-sm font-bold text-amber-700">
+              {displayName.slice(0, 2)}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-stone-800">{displayName}</p>
+              <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                {accountType}
+              </span>
+            </div>
+          </div>
+        </div>
       )}
+
+      <div className="divide-y divide-stone-100">
+        <MobileNavLink href="/"            onClick={onClose}>الرئيسية</MobileNavLink>
+        <MobileNavLink href="/marketplace" onClick={onClose}>المتجر</MobileNavLink>
+
+        {!loading && !isSeller && !isAdmin && (
+          <MobileNavLink href="/become-seller" onClick={onClose}>كن بائعًا</MobileNavLink>
+        )}
+        {!loading && isSeller && (
+          <MobileNavLink href="/seller" onClick={onClose}>لوحة البائع</MobileNavLink>
+        )}
+        {!loading && isAdmin && (
+          <MobileNavLink href="/admin" onClick={onClose}>الإدارة</MobileNavLink>
+        )}
+
+        <MobileNavLink href="/cart" onClick={onClose}>
+          <span className="flex items-center gap-2">
+            السلة
+            {itemCount > 0 && (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-xs font-bold text-white">
+                {itemCount > 9 ? '9+' : itemCount}
+              </span>
+            )}
+          </span>
+        </MobileNavLink>
+
+        {!loading && user && (
+          <>
+            <MobileNavLink href="/account/orders"    onClick={onClose}>طلباتي</MobileNavLink>
+            <MobileNavLink href="/account/addresses" onClick={onClose}>عناوين التوصيل</MobileNavLink>
+          </>
+        )}
+
+        {!loading && !user && (
+          <>
+            <MobileNavLink href="/auth/login"  onClick={onClose}>تسجيل الدخول</MobileNavLink>
+            <MobileNavLink href="/auth/signup" onClick={onClose}>إنشاء حساب</MobileNavLink>
+          </>
+        )}
+
+        {!loading && user && (
+          <button
+            onClick={handleSignOut}
+            className="block w-full px-5 py-4 text-start text-sm text-rose-500 hover:bg-rose-50 transition"
+          >
+            تسجيل الخروج
+          </button>
+        )}
+      </div>
     </nav>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BackButton — يُستخدم داخل الصفحات
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function BackButton({ href, label = 'رجوع' }: { href?: string; label?: string }) {
+  const router = useRouter()
+  return (
+    <button
+      onClick={() => href ? router.push(href) : router.back()}
+      className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-800 transition"
+    >
+      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      </svg>
+      {label}
+    </button>
   )
 }
 
@@ -153,45 +330,62 @@ export function MobileNav({ onClose }: { onClose: () => void }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
-  const path    = usePathname()
+  const path     = usePathname()
   const isActive = path === href || (href !== '/' && path.startsWith(href))
-
   return (
     <Link
       href={href}
-      className={`
-        rounded-xl px-3 py-2 text-sm font-medium transition
-        ${isActive
-          ? 'bg-amber-50 text-amber-700'
-          : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
-        }
-      `}
+      className={`rounded-xl px-3 py-2 text-sm font-medium transition
+        ${isActive ? 'bg-amber-50 text-amber-700' : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'}`}
     >
       {children}
     </Link>
   )
 }
 
-function MobileNavLink({
-  href, children, onClick,
-}: { href: string; children: React.ReactNode; onClick: () => void }) {
+function MobileNavLink({ href, children, onClick }: { href: string; children: React.ReactNode; onClick: () => void }) {
   return (
-    <Link
-      href={href}
-      onClick={onClick}
-      className="block px-5 py-4 text-sm font-medium text-stone-700 hover:bg-stone-50 transition"
-    >
+    <Link href={href} onClick={onClick}
+      className="block px-5 py-4 text-sm font-medium text-stone-700 hover:bg-stone-50 transition">
       {children}
     </Link>
   )
 }
 
+// ── Icons ─────────────────────────────────────────────────────────────────────
+
+function HomeIcon() {
+  return <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+  </svg>
+}
 function CartIcon() {
-  return (
-    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17
-           m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 1-4 0 2 2 0 0 1 4 0z" />
-    </svg>
-  )
+  return <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 1-4 0 2 2 0 0 1 4 0z" />
+  </svg>
+}
+function OrdersIcon() {
+  return <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+  </svg>
+}
+function AddressIcon() {
+  return <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+}
+function StoreIcon() {
+  return <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m12-9l2 9m-9-4h4" />
+  </svg>
+}
+function AdminIcon() {
+  return <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+  </svg>
+}
+function SignOutIcon() {
+  return <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+  </svg>
 }
