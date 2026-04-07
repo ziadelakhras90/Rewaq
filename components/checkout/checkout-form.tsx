@@ -9,9 +9,9 @@ import { OrderSummary } from './order-summary'
 import type { Address } from './address-selector'
 import type { CartWithItems } from '@/services/cart.service'
 import type { CreateOrderRequest, CreateOrderResponse } from '@/types/api.types'
-import type { Database } from '@/types/database.types'
 import { formatCurrency } from '@/lib/utils/arabic'
 import { EGYPT_GOVERNORATES } from '@/lib/utils/seller-form'
+import { addAddress, updateAddress, type CustomerAddressInsert, type CustomerAddressUpdate } from '@/services/address.service'
 
 interface CheckoutFormProps {
   cart: CartWithItems
@@ -170,7 +170,7 @@ export function CheckoutForm({ cart, subtotal, addresses, userId }: CheckoutForm
   }
 
   async function persistAddress() {
-    const addressPayload: Database['public']['Tables']['customer_addresses']['Insert'] = {
+    const addressPayload: CustomerAddressInsert = {
       customer_id: userId,
       full_name: values.fullName.trim(),
       phone: values.phone.replace(/\s+/g, ''),
@@ -184,7 +184,7 @@ export function CheckoutForm({ cart, subtotal, addresses, userId }: CheckoutForm
     }
 
     if (defaultAddress?.id) {
-      const addressUpdate: Database['public']['Tables']['customer_addresses']['Update'] = {
+      const addressUpdate: CustomerAddressUpdate = {
         full_name: addressPayload.full_name,
         phone: addressPayload.phone,
         city: addressPayload.city,
@@ -196,27 +196,28 @@ export function CheckoutForm({ cart, subtotal, addresses, userId }: CheckoutForm
         label: addressPayload.label,
       }
 
-      const { error: updateError } = await supabase
-        .from('customer_addresses')
-        .update(addressUpdate)
-        .eq('id', defaultAddress.id)
-        .eq('customer_id', userId)
-
-      if (updateError) throw new Error('تعذّر حفظ عنوان التوصيل الحالي')
+      const result = await updateAddress(supabase as any, userId, defaultAddress.id, addressUpdate)
+      if (!result.success) throw new Error(result.error ?? 'تعذّر حفظ عنوان التوصيل الحالي')
       return defaultAddress.id
     }
 
-    const { data: inserted, error: insertError } = await supabase
-      .from('customer_addresses')
-      .insert(addressPayload)
-      .select('id')
-      .single()
+    const result = await addAddress(supabase as any, userId, {
+      label: addressPayload.label,
+      full_name: addressPayload.full_name,
+      phone: addressPayload.phone,
+      city: addressPayload.city,
+      district: addressPayload.district,
+      street: addressPayload.street,
+      building: addressPayload.building,
+      notes: addressPayload.notes,
+      is_default: addressPayload.is_default,
+    })
 
-    if (insertError || !inserted) {
-      throw new Error('تعذّر إنشاء عنوان التوصيل')
+    if (!result.success) {
+      throw new Error(result.error ?? 'تعذّر إنشاء عنوان التوصيل')
     }
 
-    return inserted.id as string
+    return result.address.id
   }
 
   function validateBeforeSubmit() {
