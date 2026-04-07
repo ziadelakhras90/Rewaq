@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/types/database.types'
 
 type NotificationRow = Database['public']['Tables']['notifications']['Row']
+type NotificationUpdate = Database['public']['Tables']['notifications']['Update']
 
 export function useNotifications(userId: string | null) {
   const supabase = createClient()
@@ -42,9 +43,11 @@ export function useNotifications(userId: string | null) {
   async function markAllAsRead() {
     if (!userId || unreadCount === 0) return
 
+    const payload: NotificationUpdate = { is_read: true }
+
     const { error } = await supabase
       .from('notifications')
-      .update({ is_read: true })
+      .update(payload)
       .eq('user_id', userId)
       .eq('is_read', false)
 
@@ -60,9 +63,11 @@ export function useNotifications(userId: string | null) {
     const target = items.find((item) => item.id === id)
     if (!target || target.is_read) return
 
+    const payload: NotificationUpdate = { is_read: true }
+
     const { error } = await supabase
       .from('notifications')
-      .update({ is_read: true })
+      .update(payload)
       .eq('id', id)
 
     if (error) {
