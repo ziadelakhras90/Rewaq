@@ -3,13 +3,14 @@
 // components/admin/admin-applications-list.tsx
 // مع CSV export للطلبات (#4)
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { AdminApplicationCard } from './admin-application-card'
 import { formatDate, getApplicationStatusLabel } from '@/lib/utils/arabic'
 import type { ApplicationWithProfile } from '@/services/admin.service'
 
 interface AdminApplicationsListProps {
   initialApplications: ApplicationWithProfile[]
+  focusId?: string
 }
 
 type FilterTab = 'all' | 'pending' | 'approved' | 'rejected'
@@ -21,7 +22,7 @@ const TABS: { key: FilterTab; label: string }[] = [
   { key: 'rejected', label: 'مرفوضة' },
 ]
 
-export function AdminApplicationsList({ initialApplications }: AdminApplicationsListProps) {
+export function AdminApplicationsList({ initialApplications, focusId }: AdminApplicationsListProps) {
   const [apps,    setApps]    = useState<ApplicationWithProfile[]>(initialApplications)
   const [filter,  setFilter]  = useState<FilterTab>('all')
   const [search,  setSearch]  = useState('')
@@ -49,6 +50,15 @@ export function AdminApplicationsList({ initialApplications }: AdminApplications
     })
   }, [apps, filter, search, dateFrom, dateTo])
 
+  useEffect(() => {
+    if (!focusId) return
+
+    const target = document.getElementById(`seller-application-${focusId}`)
+    if (!target) return
+
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [focusId, filtered.length])
+
   const counts = {
     all:      apps.length,
     pending:  apps.filter((a) => a.status === 'pending').length,
@@ -57,18 +67,7 @@ export function AdminApplicationsList({ initialApplications }: AdminApplications
   }
 
   function exportCSV() {
-    const activeFilters: string[] = []
-    if (search.trim()) activeFilters.push(`بحث: ${search.trim()}`)
-    if (filter !== 'all') activeFilters.push(`الحالة: ${TABS.find((tab) => tab.key === filter)?.label ?? filter}`)
-    if (dateFrom) activeFilters.push(`من: ${dateFrom}`)
-    if (dateTo) activeFilters.push(`إلى: ${dateTo}`)
-
     const rows: string[][] = []
-    if (activeFilters.length > 0) {
-      rows.push([`الفلاتر: ${activeFilters.join(' | ')}`])
-      rows.push([])
-    }
-
     rows.push(['اسم المتجر','مقدم الطلب','المدينة','الجوال','نوع النشاط','الحالة','ملاحظات الإدارة','تاريخ التقديم','تاريخ المراجعة'])
     filtered.forEach((a) => {
       rows.push([
@@ -142,15 +141,6 @@ export function AdminApplicationsList({ initialApplications }: AdminApplications
         </button>
       </div>
 
-      {(search || filter !== 'all' || dateFrom || dateTo) && (
-        <div className="flex flex-wrap gap-2">
-          {search && <FilterTag label={`بحث: ${search}`} onRemove={() => setSearch('')} />}
-          {filter !== 'all' && <FilterTag label={`الحالة: ${TABS.find((tab) => tab.key === filter)?.label ?? filter}`} onRemove={() => setFilter('all')} />}
-          {dateFrom && <FilterTag label={`من: ${dateFrom}`} onRemove={() => setDateFrom('')} />}
-          {dateTo && <FilterTag label={`إلى: ${dateTo}`} onRemove={() => setDateTo('')} />}
-        </div>
-      )}
-
       {/* ── List ──────────────────────────────────────────────────────── */}
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-stone-200 bg-white py-12 text-center">
@@ -161,7 +151,12 @@ export function AdminApplicationsList({ initialApplications }: AdminApplications
       ) : (
         <div className="space-y-3">
           {filtered.map((app) => (
-            <AdminApplicationCard key={app.id} application={app} onStatusChange={handleStatusChange} />
+            <AdminApplicationCard
+              key={app.id}
+              application={app}
+              onStatusChange={handleStatusChange}
+              isFocused={focusId === app.id}
+            />
           ))}
           <p className="text-xs text-stone-400 text-end">
             {filtered.length} من أصل {apps.length} طلب
@@ -169,19 +164,5 @@ export function AdminApplicationsList({ initialApplications }: AdminApplications
         </div>
       )}
     </div>
-  )
-}
-
-
-function FilterTag({ label, onRemove }: { label: string; onRemove: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onRemove}
-      className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs text-stone-600 transition hover:border-stone-300 hover:bg-stone-50"
-    >
-      <span>{label}</span>
-      <span className="text-stone-400">×</span>
-    </button>
   )
 }

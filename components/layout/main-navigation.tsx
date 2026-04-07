@@ -312,9 +312,29 @@ export function MobileNav({ onClose }: { onClose: () => void }) {
 
 export function BackButton({ href, label = 'رجوع' }: { href?: string; label?: string }) {
   const router = useRouter()
+
+  function handleBack() {
+    if (typeof window === 'undefined') {
+      if (href) router.push(href)
+      return
+    }
+
+    const fallbackHref = href ?? '/'
+    const hasHistory = window.history.length > 1
+    const referrer = document.referrer
+
+    if (hasHistory && (!referrer || new URL(referrer).origin === window.location.origin)) {
+      router.back()
+      return
+    }
+
+    router.push(fallbackHref)
+  }
+
   return (
     <button
-      onClick={() => href ? router.push(href) : router.back()}
+      type="button"
+      onClick={handleBack}
       className="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-800 transition"
     >
       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

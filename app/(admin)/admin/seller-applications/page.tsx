@@ -7,8 +7,10 @@ import { AdminApplicationsList }     from '@/components/admin/admin-applications
 
 export const metadata: Metadata = { title: 'طلبات البائعين — لوحة إدارة Rewq' }
 
-export default async function SellerApplicationsPage() {
+export default async function SellerApplicationsPage({ searchParams }: { searchParams?: Promise<{ focus?: string }> }) {
   const applications = await getAdminApplications()
+  const resolvedSearchParams = await searchParams
+  const focusId = resolvedSearchParams?.focus
 
   return (
     <div dir="rtl" className="space-y-6">
@@ -18,7 +20,7 @@ export default async function SellerApplicationsPage() {
           مراجعة وقبول أو رفض طلبات الانضمام كبائع
         </p>
       </div>
-      <AdminApplicationsList initialApplications={applications} />
+      <AdminApplicationsList initialApplications={applications} focusId={focusId} />
     </div>
   )
 }

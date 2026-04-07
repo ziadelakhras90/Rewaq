@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic'
 import { redirect }        from 'next/navigation'
 import type { Metadata }   from 'next'
 import Link                from 'next/link'
+import { BackButton }      from '@/components/layout/main-navigation'
 import { createClient }    from '@/lib/supabase/server'
 import { getCustomerOrders } from '@/services/order.service'
 import { OrdersList }      from '@/components/account/orders-list'
@@ -25,18 +26,13 @@ export default async function OrdersPage() {
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
 
         {/* ── Header ────────────────────────────────────────────────── */}
-        <div className="mb-6 flex items-center gap-4">
-          <Link
-            href="/account"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-500 hover:border-stone-300 transition"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-          <div>
-            <h1 className="text-xl font-bold text-stone-900">طلباتي</h1>
-            <p className="text-sm text-stone-400">سجل جميع مشترياتك</p>
+        <div className="mb-6 space-y-3">
+          <BackButton href="/marketplace" />
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-xl font-bold text-stone-900">طلباتي</h1>
+              <p className="text-sm text-stone-400">سجل جميع مشترياتك</p>
+            </div>
           </div>
         </div>
 

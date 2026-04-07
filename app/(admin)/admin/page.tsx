@@ -42,21 +42,26 @@ export default async function AdminDashboardPage() {
           ) : (
             <ul className="divide-y divide-stone-100">
               {data.recentApplications.map((app) => (
-                <li key={app.id} className="flex items-center justify-between gap-3 px-5 py-3">
-                  <div>
-                    <p className="text-sm font-medium text-stone-800">{app.store_name}</p>
-                    <p className="text-xs text-stone-400">
-                      {app.profiles?.full_name ?? '—'} · {formatDate(app.created_at)}
-                    </p>
-                  </div>
-                  <span className={`
-                    shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-                    ${app.status === 'pending'  ? 'bg-amber-100 text-amber-800'   : ''}
-                    ${app.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : ''}
-                    ${app.status === 'rejected' ? 'bg-rose-100 text-rose-800'    : ''}
-                  `}>
-                    {getApplicationStatusLabel(app.status)}
-                  </span>
+                <li key={app.id}>
+                  <Link
+                    href={`/admin/seller-applications?focus=${app.id}`}
+                    className="flex items-center justify-between gap-3 px-5 py-3 transition hover:bg-stone-50"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-stone-800">{app.store_name}</p>
+                      <p className="text-xs text-stone-400">
+                        {app.profiles?.full_name ?? '—'} · {formatDate(app.created_at)}
+                      </p>
+                    </div>
+                    <span className={`
+                      shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+                      ${app.status === 'pending'  ? 'bg-amber-100 text-amber-800'   : ''}
+                      ${app.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : ''}
+                      ${app.status === 'rejected' ? 'bg-rose-100 text-rose-800'    : ''}
+                    `}>
+                      {getApplicationStatusLabel(app.status)}
+                    </span>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -76,24 +81,24 @@ export default async function AdminDashboardPage() {
           ) : (
             <ul className="divide-y divide-stone-100">
               {data.recentOrders.map((order) => (
-                <li key={order.id} className="flex items-center justify-between gap-3 px-5 py-3">
-                  <div>
-                    <Link
-                      href={`/admin/orders/${order.order_number}`}
-                      className="text-sm font-mono font-bold text-amber-600 hover:underline"
-                    >
-                      {order.order_number}
-                    </Link>
-                    <p className="text-xs text-stone-400">
-                      {order.stores?.name ?? '—'} · {formatDate(order.created_at)}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 flex-col items-end gap-1">
-                    <p className="text-xs font-bold text-stone-700">
-                      {formatCurrency(order.total_amount)}
-                    </p>
-                    <OrderStatusBadge status={order.status} />
-                  </div>
+                <li key={order.id}>
+                  <Link
+                    href={`/admin/orders/${order.order_number}`}
+                    className="flex items-center justify-between gap-3 px-5 py-3 transition hover:bg-stone-50"
+                  >
+                    <div>
+                      <p className="text-sm font-mono font-bold text-amber-600">{order.order_number}</p>
+                      <p className="text-xs text-stone-400">
+                        {order.stores?.name ?? '—'} · {formatDate(order.created_at)}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <p className="text-xs font-bold text-stone-700">
+                        {formatCurrency(order.total_amount)}
+                      </p>
+                      <OrderStatusBadge status={order.status} />
+                    </div>
+                  </Link>
                 </li>
               ))}
             </ul>

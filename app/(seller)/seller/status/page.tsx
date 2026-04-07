@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getSellerApplicationStatus } from '@/services/seller.service'
 import { SellerApplicationStatus } from '@/components/seller/seller-application-status'
+import { BackButton } from '@/components/layout/main-navigation'
 
 export const metadata: Metadata = {
   title: 'حالة طلب البائع — Rewq',
@@ -27,6 +28,9 @@ export default async function SellerStatusPage() {
   return (
     <div dir="rtl" className="min-h-screen bg-stone-50">
       <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+        <div className="mb-4">
+          <BackButton href="/" />
+        </div>
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-stone-900">حالة الطلب</h1>
           <p className="mt-1 text-sm text-stone-500">تابع حالة طلب الانضمام كبائع في Rewq.</p>
