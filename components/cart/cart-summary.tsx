@@ -1,25 +1,24 @@
-// components/cart/cart-summary.tsx
-
-import Link             from 'next/link'
+import Link from 'next/link'
 import { formatCurrency } from '@/lib/utils/arabic'
 
 interface CartSummaryProps {
-  subtotal:   number
+  subtotal: number
   storeName?: string
-  itemCount:  number
-  disabled?:  boolean
+  itemCount: number
+  disabled?: boolean
 }
 
 export function CartSummary({ subtotal, storeName, itemCount, disabled }: CartSummaryProps) {
-  const deliveryFee = 0  // MVP: شحن مجاني أو يُحدد لاحقًا
-  const total       = subtotal + deliveryFee
+  const deliveryFee = 0
+  const total = subtotal + deliveryFee
 
   return (
     <div dir="rtl" className="rounded-2xl border border-stone-200 bg-white p-5 space-y-4">
+      <div>
+        <h2 className="text-base font-bold text-stone-900">راجع الطلب قبل الإرسال</h2>
+        <p className="mt-1 text-xs text-stone-400">نفس فكرة السلة الجديدة: المنتجات، البيانات، والملخص النهائي.</p>
+      </div>
 
-      <h2 className="text-base font-bold text-stone-900">ملخص الطلب</h2>
-
-      {/* المتجر */}
       {storeName && (
         <div className="flex items-center gap-2 rounded-xl bg-stone-50 px-3 py-2.5">
           <svg className="h-4 w-4 shrink-0 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -33,19 +32,16 @@ export function CartSummary({ subtotal, storeName, itemCount, disabled }: CartSu
         </div>
       )}
 
-      {/* تفاصيل الأسعار */}
       <div className="space-y-2.5 border-t border-stone-100 pt-4">
         <Row label={`المنتجات (${itemCount})`} value={formatCurrency(subtotal)} />
-        <Row label="رسوم التوصيل" value={deliveryFee === 0 ? 'مجاني' : formatCurrency(deliveryFee)} />
+        <Row label="الشحن" value={deliveryFee === 0 ? 'يحدد لاحقًا' : formatCurrency(deliveryFee)} />
       </div>
 
-      {/* الإجمالي */}
       <div className="flex items-center justify-between border-t border-stone-200 pt-3">
-        <span className="text-base font-bold text-stone-900">الإجمالي</span>
+        <span className="text-base font-bold text-stone-900">الإجمالي الحالي</span>
         <span className="text-lg font-bold text-amber-600">{formatCurrency(total)}</span>
       </div>
 
-      {/* زر الدفع */}
       <Link
         href="/checkout"
         className={`
@@ -53,7 +49,7 @@ export function CartSummary({ subtotal, storeName, itemCount, disabled }: CartSu
           text-sm font-semibold transition
           ${disabled
             ? 'pointer-events-none bg-stone-100 text-stone-400'
-            : 'bg-amber-500 text-white hover:bg-amber-600 active:scale-95 shadow-sm'
+            : 'bg-[#6d8c26] text-white hover:bg-[#5f7b20] active:scale-95 shadow-sm'
           }
         `}
       >
@@ -61,12 +57,11 @@ export function CartSummary({ subtotal, storeName, itemCount, disabled }: CartSu
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
             d="M9 5l7 7-7 7" />
         </svg>
-        إتمام الطلب
+        مراجعة الطلب
       </Link>
 
-      {/* ضمانات */}
       <p className="text-center text-xs text-stone-400">
-        الدفع عند الاستلام · إرجاع مجاني خلال ٧ أيام
+        تقدر تكمل البيانات، تضيف اللوكيشن، وترسل الطلب مباشرة أو عبر واتساب.
       </p>
     </div>
   )

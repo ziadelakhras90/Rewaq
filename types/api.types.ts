@@ -9,6 +9,7 @@ export interface CreateOrderRequest {
   cartId:        string
   addressId:     string
   paymentMethod: PaymentMethod
+  deliveryFee?:  number
   notes?:        string
 }
 
