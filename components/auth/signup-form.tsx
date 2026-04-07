@@ -13,8 +13,6 @@ interface SignupFormProps {
 
 export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
   const router = useRouter()
-  const supabase = createClient()
-
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -44,6 +42,7 @@ export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
       callbackUrl.searchParams.set('next', '/auth/login?confirmed=1')
       const emailRedirectTo = callbackUrl.toString()
 
+      const supabase = createClient()
       const { data, error: authError } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
@@ -93,6 +92,7 @@ export function SignupForm({ redirectTo = '/' }: SignupFormProps) {
     try {
       const origin = getAppUrl()
 
+      const supabase = createClient()
       const { error: resendError } = await supabase.auth.resend({
         type: 'signup',
         email: email.trim().toLowerCase(),
