@@ -81,7 +81,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     await supabase.from('notifications').insert({
       user_id: application.user_id,
       type:    'seller_approved',
-      title:   'تمت الموافقة على متجرك في رِواق',
+      title:   'تمت الموافقة على متجرك في Rewq',
       body:    'يمكنك الآن البدء بإضافة منتجاتك وإدارة متجرك.',
       link:    '/seller',
     })

@@ -76,7 +76,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     await supabase.from('notifications').insert({
       user_id: application.user_id,
       type:    'seller_rejected',
-      title:   'بشأن طلب انضمامك إلى رِواق',
+      title:   'بشأن طلب انضمامك إلى Rewq',
       body:    adminNotes.trim(),
       link:    '/seller/status',
     })
