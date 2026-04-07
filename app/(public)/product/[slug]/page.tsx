@@ -1,4 +1,6 @@
 export const dynamic = 'force-dynamic'
+// app/(public)/product/[slug]/page.tsx
+// Server Component — يجلب المنتج بالـ slug ويمرّره للـ client components
 
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -13,56 +15,16 @@ interface PageProps {
   params: Promise<{ slug: string }>
 }
 
-type StoreRelation = {
-  id: string
-  name: string
-  slug: string
-  city: string | null
-}
-
-type CategoryRelation = {
-  id: string
-  name: string
-}
-
-type ProductImageRelation = {
-  url: string
-  alt_text: string | null
-  sort_order?: number | null
-  is_primary?: boolean | null
-}
-
-function normalizeOne<T>(value: T | T[] | null | undefined): T | null {
-  if (!value) return null
-  return Array.isArray(value) ? value[0] ?? null : value
-}
-
-function normalizeImages(value: unknown): { url: string; alt_text: string | null }[] {
-  if (!Array.isArray(value)) return []
-
-  return value
-    .filter((img): img is ProductImageRelation => {
-      return !!img && typeof img === 'object' && typeof (img as ProductImageRelation).url === 'string' && (img as ProductImageRelation).url.trim().length > 0
-    })
-    .sort((a, b) => {
-      if (a.is_primary && !b.is_primary) return -1
-      if (!a.is_primary && b.is_primary) return 1
-      return (a.sort_order ?? 0) - (b.sort_order ?? 0)
-    })
-    .map((img) => ({ url: img.url, alt_text: img.alt_text ?? null }))
-}
-
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
   const supabase = await createClient()
   const product = await getProductBySlug(supabase, slug)
-  const store = normalizeOne<StoreRelation>((product as any)?.stores)
 
   if (!product) return { title: 'منتج غير موجود — Rewq' }
 
   return {
     title: `${product.name} — Rewq`,
-    description: product.description ?? `${product.name} من متجر ${store?.name ?? 'Rewq'}`,
+    description: product.description ?? `${product.name} من متجر ${(product as any).stores?.name}`,
   }
 }
 
@@ -73,26 +35,55 @@ export default async function ProductPage({ params }: PageProps) {
 
   if (!product) notFound()
 
-  const store = normalizeOne<StoreRelation>((product as any)?.stores)
-  if (!store) {
-    console.error('ProductPage: missing store relation for product', product.id)
-    notFound()
-  }
-
-  const category = normalizeOne<CategoryRelation>((product as any)?.categories)
-  const images = normalizeImages((product as any)?.product_images)
-
   const relatedResult = await getProducts(supabase, {
     categoryId: product.category_id ?? undefined,
     pageSize: 4,
   })
   const related = relatedResult.data.filter((p) => p.id !== product.id).slice(0, 4)
 
+  const rawImages = Array.isArray((product as any).product_images)
+    ? (product as any).product_images
+    : []
+
+  const images: { url: string; alt_text: string | null }[] = rawImages
+    .map((img: any) => ({
+      url: typeof img?.url === 'string' ? img.url : '',
+      alt_text: typeof img?.alt_text === 'string' ? img.alt_text : null,
+      sort_order: Number(img?.sort_order ?? 0),
+      is_primary: Boolean(img?.is_primary),
+    }))
+    .filter((img: any) => img.url)
+    .sort((a: any, b: any) => {
+      if (a.is_primary !== b.is_primary) return a.is_primary ? -1 : 1
+      return a.sort_order - b.sort_order
+    })
+    .map(({ url, alt_text }) => ({ url, alt_text }))
+
+  const rawStore = Array.isArray((product as any).stores)
+    ? (product as any).stores[0]
+    : (product as any).stores
+
+  const store: { id: string; name: string; slug: string; city: string | null } = {
+    id: rawStore?.id ?? '',
+    name: rawStore?.name ?? 'المتجر',
+    slug: rawStore?.slug ?? '',
+    city: rawStore?.city ?? null,
+  }
+
+  const rawCategory = Array.isArray((product as any).categories)
+    ? (product as any).categories[0]
+    : (product as any).categories
+
+  const category: { id: string; name: string } | null = rawCategory
+    ? { id: rawCategory.id, name: rawCategory.name }
+    : null
+
   return (
     <div dir="rtl" className="min-h-screen bg-stone-50">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <Breadcrumb
           storeName={store.name}
+          storeSlug={store.slug}
           categoryName={category?.name}
           productName={product.name}
         />
@@ -127,10 +118,12 @@ export default async function ProductPage({ params }: PageProps) {
 
 function Breadcrumb({
   storeName,
+  storeSlug,
   categoryName,
   productName,
 }: {
   storeName: string
+  storeSlug: string
   categoryName: string | undefined
   productName: string
 }) {
