@@ -1,7 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // services/admin.service.ts
 // Admin-only data fetching — يستخدم service client يتجاوز RLS
-// يُستخدم حصرًا من Server Components بعد التحقق من الدور في الـ middleware
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { createServiceClient } from '@/lib/supabase/service'
@@ -19,10 +18,10 @@ type ApplicationRow  = Database['public']['Tables']['seller_applications']['Row'
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface AdminStats {
-  totalSellers:      number
+  totalSellers:        number
   pendingApplications: number
-  totalProducts:     number
-  totalOrders:       number
+  totalProducts:       number
+  totalOrders:         number
 }
 
 export interface AdminDashboardData extends AdminStats {
@@ -67,7 +66,7 @@ export async function getDashboardData(): Promise<AdminDashboardData> {
     { count: pendingApplications },
     { count: totalProducts },
     { count: totalOrders },
-    { data: recentApps },
+    { data: recentApps, error: appsError },
     { data: recentOrders },
   ] = await Promise.all([
     supabase
@@ -85,9 +84,11 @@ export async function getDashboardData(): Promise<AdminDashboardData> {
     supabase
       .from('orders')
       .select('*', { count: 'exact', head: true }),
+    // BUG FIX: استخدام FK hint الصحيح لتجنب الـ ambiguity
+    // seller_applications.user_id -> profiles.id (وليس reviewed_by)
     supabase
       .from('seller_applications')
-      .select('*, profiles ( full_name )')
+      .select('*, profiles!seller_applications_user_id_fkey ( full_name )')
       .order('created_at', { ascending: false })
       .limit(5),
     supabase
@@ -97,15 +98,23 @@ export async function getDashboardData(): Promise<AdminDashboardData> {
       .limit(5),
   ])
 
+  if (appsError) {
+    console.error('getDashboardData recentApps error:', appsError)
+  }
+
   return {
-    totalSellers:        totalSellers       ?? 0,
+    totalSellers:        totalSellers        ?? 0,
     pendingApplications: pendingApplications ?? 0,
-    totalProducts:       totalProducts      ?? 0,
-    totalOrders:         totalOrders        ?? 0,
-    recentApplications: (recentApps ?? []) as ApplicationWithProfile[],
+    totalProducts:       totalProducts       ?? 0,
+    totalOrders:         totalOrders         ?? 0,
+    recentApplications:  ((recentApps ?? []) as any[]).map((a: any) => ({
+      ...a,
+      // normalize: PostgREST قد يُعيد الـ profiles بمفتاح مختلف مع الـ hint
+      profiles: a.profiles ?? a['profiles!seller_applications_user_id_fkey'] ?? null,
+    })) as ApplicationWithProfile[],
     recentOrders: ((recentOrders as any[]) ?? []).map((o: any) => ({
       ...o,
-      item_count: (o as any).order_items?.length ?? 0,
+      item_count:  (o as any).order_items?.length ?? 0,
       order_items: undefined,
     })) as AdminOrderSummary[],
   }
@@ -116,20 +125,44 @@ export async function getDashboardData(): Promise<AdminDashboardData> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function getAdminApplications(
-  status?: 'pending' | 'approved' | 'rejected'
+  status?: 'pending' | 'approved' | 'rejected',
+  filters?: { storeName?: string; dateFrom?: string; dateTo?: string }
 ): Promise<ApplicationWithProfile[]> {
   const supabase = createServiceClient() as any
 
+  // BUG FIX: FK hint الصحيح
   let query = supabase
     .from('seller_applications')
-    .select('*, profiles ( full_name )')
+    .select('*, profiles!seller_applications_user_id_fkey ( full_name )')
     .order('created_at', { ascending: false })
 
   if (status) query = query.eq('status', status)
 
+  // فلتر اسم المتجر (إذا مُرِّر)
+  if (filters?.storeName?.trim()) {
+    query = query.ilike('store_name', `%${filters.storeName.trim()}%`)
+  }
+
+  // فلتر التاريخ
+  if (filters?.dateFrom) {
+    query = query.gte('created_at', `${filters.dateFrom}T00:00:00`)
+  }
+  if (filters?.dateTo) {
+    query = query.lte('created_at', `${filters.dateTo}T23:59:59.999`)
+  }
+
   const { data, error } = await query
-  if (error) { console.error('getAdminApplications:', error); return [] }
-  return (data ?? []) as ApplicationWithProfile[]
+
+  if (error) {
+    console.error('getAdminApplications:', error)
+    return []
+  }
+
+  // normalize الـ profiles key
+  return ((data ?? []) as any[]).map((a: any) => ({
+    ...a,
+    profiles: a.profiles ?? a['profiles!seller_applications_user_id_fkey'] ?? null,
+  })) as ApplicationWithProfile[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -139,17 +172,31 @@ export async function getAdminApplications(
 export async function getAdminSellers(): Promise<AdminSellerRow[]> {
   const supabase = createServiceClient() as any
 
+  // BUG FIX: stores.seller_id -> profiles.id — FK hint
   const { data, error } = await supabase
     .from('stores')
     .select(`
       *,
-      profiles ( full_name, phone ),
+      profiles!stores_seller_id_fkey ( full_name, phone ),
       seller_applications ( status )
     `)
     .order('created_at', { ascending: false })
 
-  if (error) { console.error('getAdminSellers:', error); return [] }
-  return (data ?? []) as unknown as AdminSellerRow[]
+  if (error) {
+    console.error('getAdminSellers:', error)
+    console.warn('getAdminSellers fallback: returning stores without profile join data')
+    // Fallback بدون join لو فشل
+    const { data: fallback } = await supabase
+      .from('stores')
+      .select('*, seller_applications ( status )')
+      .order('created_at', { ascending: false })
+    return (fallback ?? []) as unknown as AdminSellerRow[]
+  }
+
+  return ((data ?? []) as any[]).map((s: any) => ({
+    ...s,
+    profiles: s.profiles ?? s['profiles!stores_seller_id_fkey'] ?? null,
+  })) as unknown as AdminSellerRow[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -168,7 +215,7 @@ export async function getAdminOrders(): Promise<AdminOrderSummary[]> {
 
   return ((data as any[]) ?? []).map((o: any) => ({
     ...o,
-    item_count: (o as any).order_items?.length ?? 0,
+    item_count:  (o as any).order_items?.length ?? 0,
     order_items: undefined,
   })) as AdminOrderSummary[]
 }
@@ -205,7 +252,7 @@ export async function getAdminOrderDetails(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// getCategories
+// getAdminCategories
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function getAdminCategories(): Promise<CategoryRow[]> {
