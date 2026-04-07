@@ -9,6 +9,7 @@ import { OrderSummary } from './order-summary'
 import type { Address } from './address-selector'
 import type { CartWithItems } from '@/services/cart.service'
 import type { CreateOrderRequest, CreateOrderResponse } from '@/types/api.types'
+import type { Database } from '@/types/database.types'
 import { formatCurrency } from '@/lib/utils/arabic'
 import { EGYPT_GOVERNORATES } from '@/lib/utils/seller-form'
 
@@ -169,7 +170,7 @@ export function CheckoutForm({ cart, subtotal, addresses, userId }: CheckoutForm
   }
 
   async function persistAddress() {
-    const addressPayload = {
+    const addressPayload: Database['public']['Tables']['customer_addresses']['Insert'] = {
       customer_id: userId,
       full_name: values.fullName.trim(),
       phone: values.phone.replace(/\s+/g, ''),
@@ -183,19 +184,21 @@ export function CheckoutForm({ cart, subtotal, addresses, userId }: CheckoutForm
     }
 
     if (defaultAddress?.id) {
+      const addressUpdate: Database['public']['Tables']['customer_addresses']['Update'] = {
+        full_name: addressPayload.full_name,
+        phone: addressPayload.phone,
+        city: addressPayload.city,
+        district: addressPayload.district,
+        street: addressPayload.street,
+        building: addressPayload.building,
+        notes: addressPayload.notes,
+        is_default: addressPayload.is_default,
+        label: addressPayload.label,
+      }
+
       const { error: updateError } = await supabase
         .from('customer_addresses')
-        .update({
-          full_name: addressPayload.full_name,
-          phone: addressPayload.phone,
-          city: addressPayload.city,
-          district: addressPayload.district,
-          street: addressPayload.street,
-          building: addressPayload.building,
-          notes: addressPayload.notes,
-          is_default: addressPayload.is_default,
-          label: addressPayload.label,
-        })
+        .update(addressUpdate)
         .eq('id', defaultAddress.id)
         .eq('customer_id', userId)
 
