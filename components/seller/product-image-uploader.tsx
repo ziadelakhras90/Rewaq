@@ -1,7 +1,8 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState, type ChangeEvent } from 'react'
 import type { ProductImageInput } from '@/services/seller-products.service'
+import { uploadProductImage } from '@/lib/utils/product-image-storage'
 
 interface ProductImageUploaderProps {
   images: ProductImageInput[]
@@ -9,7 +10,13 @@ interface ProductImageUploaderProps {
 }
 
 export function ProductImageUploader({ images, onChange }: ProductImageUploaderProps) {
-  const normalized = useMemo(() => images.length ? images : [{ url: '', is_primary: true }], [images])
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+
+  const normalized = useMemo(
+    () => (images.length ? images : [{ url: '', is_primary: true }]),
+    [images]
+  )
 
   function updateImage(index: number, patch: Partial<ProductImageInput>) {
     onChange(
@@ -32,7 +39,31 @@ export function ProductImageUploader({ images, onChange }: ProductImageUploaderP
   }
 
   function setPrimary(index: number) {
-    onChange(normalized.map((image, currentIndex) => ({ ...image, is_primary: currentIndex === index })))
+    onChange(
+      normalized.map((image, currentIndex) => ({
+        ...image,
+        is_primary: currentIndex === index,
+      }))
+    )
+  }
+
+  async function handleFileUpload(index: number, event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploadError(null)
+    setUploadingIndex(index)
+
+    const result = await uploadProductImage(file)
+    setUploadingIndex(null)
+    event.target.value = ''
+
+    if (!result.success) {
+      setUploadError(result.error)
+      return
+    }
+
+    updateImage(index, { url: result.publicUrl })
   }
 
   return (
@@ -40,32 +71,46 @@ export function ProductImageUploader({ images, onChange }: ProductImageUploaderP
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold text-stone-800">صور المنتج</h3>
-          <p className="text-xs text-stone-400">أضف روابط الصور. الصورة الأولى ستكون الأساسية ما لم تحدد غير ذلك.</p>
+          <p className="text-xs text-stone-400">ارفع الصور مباشرة من جهازك. سيتم حفظها في Supabase Storage داخل مسارك الخاص.</p>
         </div>
         <button type="button" onClick={addImage} className="rounded-xl border border-stone-200 px-3 py-2 text-sm font-semibold text-stone-700 hover:border-stone-300">
           إضافة صورة
         </button>
       </div>
 
+      {uploadError && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+          {uploadError}
+        </div>
+      )}
+
       <div className="space-y-3">
         {normalized.map((image, index) => (
           <div key={index} className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
             <div className="grid gap-4 lg:grid-cols-[1fr,180px]">
               <div className="space-y-3">
-                <label className="block text-sm font-medium text-stone-700">رابط الصورة #{index + 1}</label>
+                <label className="block text-sm font-medium text-stone-700">صورة المنتج #{index + 1}</label>
+
                 <input
-                  value={image.url}
-                  onChange={(event) => updateImage(index, { url: event.target.value })}
-                  placeholder="https://example.com/product.jpg"
-                  dir="ltr"
-                  className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-700 placeholder:text-stone-400 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20"
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => handleFileUpload(index, event)}
+                  className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-700 file:ml-3 file:rounded-lg file:border-0 file:bg-amber-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-amber-700 hover:file:bg-amber-200"
                 />
+
+                <p className="text-xs text-stone-400">الحد الأقصى 5MB. يتم الرفع داخل المجلد المرتبط بـ user_id الخاص بك.</p>
+
+                {uploadingIndex === index && (
+                  <p className="text-xs text-amber-600">جارٍ رفع الصورة...</p>
+                )}
+
                 <input
                   value={image.alt_text ?? ''}
                   onChange={(event) => updateImage(index, { alt_text: event.target.value })}
                   placeholder="وصف قصير للصورة (اختياري)"
                   className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-700 placeholder:text-stone-400 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20"
                 />
+
                 <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={() => setPrimary(index)} className={`rounded-xl px-3 py-2 text-xs font-semibold ${image.is_primary ? 'bg-emerald-100 text-emerald-700' : 'border border-stone-200 text-stone-600 hover:border-stone-300'}`}>
                     {image.is_primary ? 'الصورة الأساسية' : 'اجعلها الأساسية'}

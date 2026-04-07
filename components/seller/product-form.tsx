@@ -87,7 +87,7 @@ export function ProductForm({ storeId, categories, existing }: ProductFormProps)
     if (!values.price || Number(values.price) <= 0) next.price = 'السعر يجب أن يكون أكبر من صفر'
     if (values.compare_price && Number(values.compare_price) <= Number(values.price)) next.compare_price = 'سعر المقارنة يجب أن يكون أكبر من السعر الحالي'
     if (values.track_inventory && Number(values.stock_quantity) < 0) next.stock_quantity = 'المخزون لا يمكن أن يكون سالبًا'
-    if (values.images.some((image) => image.url.trim() === '')) next.images = 'احذف صفوف الصور الفارغة أو أكمل الروابط.'
+    if (values.images.some((image) => image.url.trim() === '')) next.images = 'ارفع صورة لكل صف أو احذف الصفوف الفارغة.'
     return next
   }
 
