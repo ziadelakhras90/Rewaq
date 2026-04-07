@@ -1,4 +1,5 @@
 import type { Database } from '@/types/database.types'
+import { parseSellerStoredPhone } from '@/lib/utils/seller-form'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 type AppSupabaseClient = SupabaseClient<Database, 'public', any>
@@ -19,6 +20,20 @@ export interface SellerApplicationFormValues {
 export interface SellerApplicationStatusResult {
   application: SellerApplicationRow | null
   store: StoreRow | null
+}
+
+
+export function mapApplicationToSellerFormValues(application: SellerApplicationRow): SellerApplicationFormValues {
+  const parsedPhone = parseSellerStoredPhone(application.phone)
+
+  return {
+    store_name: application.store_name ?? '',
+    store_description: application.store_description ?? '',
+    country: parsedPhone.country,
+    phone_local: parsedPhone.phone_local,
+    city: application.city ?? '',
+    address_details: application.business_type ?? '',
+  }
 }
 
 export interface SellerDashboardStats {
