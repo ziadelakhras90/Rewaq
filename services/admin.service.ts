@@ -126,7 +126,7 @@ export async function getDashboardData(): Promise<AdminDashboardData> {
 
 export async function getAdminApplications(
   status?: 'pending' | 'approved' | 'rejected',
-  filters?: { storeName?: string; dateFrom?: string; dateTo?: string }
+  filters?: { sellerName?: string; dateFrom?: string; dateTo?: string }
 ): Promise<ApplicationWithProfile[]> {
   const supabase = createServiceClient() as any
 
@@ -138,9 +138,9 @@ export async function getAdminApplications(
 
   if (status) query = query.eq('status', status)
 
-  // فلتر اسم المتجر (إذا مُرِّر)
-  if (filters?.storeName?.trim()) {
-    query = query.ilike('store_name', `%${filters.storeName.trim()}%`)
+  // فلتر الاسم (إذا مُرِّر)
+  if (filters?.sellerName?.trim()) {
+    query = query.ilike('store_name', `%${filters.sellerName.trim()}%`)
   }
 
   // فلتر التاريخ
@@ -184,7 +184,7 @@ export async function getAdminSellers(): Promise<AdminSellerRow[]> {
 
   if (error) {
     console.error('getAdminSellers:', error)
-    console.warn('getAdminSellers fallback: returning stores without profile join data')
+    console.warn('getAdminSellers fallback activated: returning stores without profile join')
     // Fallback بدون join لو فشل
     const { data: fallback } = await supabase
       .from('stores')
