@@ -50,7 +50,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       throw new ValidationError('Request body غير صالح')
     }
 
-    const { cartId, addressId, paymentMethod, notes } = body
+    const { cartId, addressId, paymentMethod, deliveryFee, notes } = body
 
     if (!cartId)        throw new ValidationError('cartId مطلوب')
     if (!addressId)     throw new ValidationError('addressId مطلوب')
@@ -92,9 +92,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const orderNumber = await generateOrderNumber(supabase)
 
     // ── 10. حساب المبالغ النهائية ─────────────────────────────────────────
-    const deliveryFee    = 0     // MVP: شحن مجاني أو ثابت — يُطوَّر لاحقًا
+    const normalizedDeliveryFee = Number.isFinite(Number(deliveryFee))
+      ? Math.max(0, Number(deliveryFee))
+      : 0
     const discountAmount = 0     // MVP: لا كوبونات بعد
-    const totalAmount    = subtotal + deliveryFee - discountAmount
+    const totalAmount    = subtotal + normalizedDeliveryFee - discountAmount
 
     // ── 11. تنفيذ الـ Transaction عبر RPC ────────────────────────────────
     const { data: orderId, error: rpcError } = await supabase.rpc(
@@ -113,7 +115,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         p_delivery_notes:    address.notes    ?? null,
 
         p_subtotal:        subtotal,
-        p_delivery_fee:    deliveryFee,
+        p_delivery_fee:    normalizedDeliveryFee,
         p_discount_amount: discountAmount,
         p_total_amount:    totalAmount,
 

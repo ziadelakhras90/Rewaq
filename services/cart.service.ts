@@ -34,6 +34,7 @@ export interface CartWithItems extends Cart {
     id: string
     name: string
     slug: string
+    phone?: string | null
   } | null
   cart_items: CartItemWithProduct[]
 }
@@ -90,7 +91,8 @@ export async function getCartWithItems(
       stores (
         id,
         name,
-        slug
+        slug,
+        phone
       ),
       cart_items (
         *,
@@ -258,7 +260,10 @@ export async function updateCartItemQuantity(
     .update({ quantity })
     .eq('id', itemId)
 
-  if (error) return { success: false, error: 'فشل تحديث الكمية' }
+  if (error) {
+    return { success: false, error: 'فشل تحديث الكمية' }
+  }
+
   return { success: true }
 }
 
@@ -271,110 +276,68 @@ export async function removeFromCart(
   customerId: string,
   itemId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const { data: cart } = await supabase
-    .from('carts')
-    .select('id')
-    .eq('customer_id', customerId)
-    .eq('status', 'active')
-    .maybeSingle()
-
-  if (!cart) {
-    return { success: false, error: 'السلة غير موجودة' }
-  }
-
+  // تحقق من الملكية
   const { data: item } = await supabase
     .from('cart_items')
-    .select('id')
+    .select('id, cart_id, carts!inner(customer_id)')
     .eq('id', itemId)
-    .eq('cart_id', cart.id)
     .maybeSingle()
 
-  if (!item) {
+  if (!item || item.carts?.customer_id !== customerId) {
     return { success: false, error: 'العنصر غير موجود' }
   }
 
-  const { error: deleteError } = await supabase
+  const { error } = await supabase
     .from('cart_items')
     .delete()
     .eq('id', itemId)
-    .eq('cart_id', cart.id)
 
-  if (deleteError) return { success: false, error: 'فشل حذف العنصر' }
+  if (error) return { success: false, error: 'فشل حذف العنصر' }
 
-  // لو السلة أصبحت فارغة، نمسح store_id
-  await clearStoreIdIfEmpty(supabase, customerId)
+  // إذا فرغت السلة → أزل store_id من carts حتى يمكن البدء بمتجر جديد
+  const { count } = await supabase
+    .from('cart_items')
+    .select('*', { count: 'exact', head: true })
+    .eq('cart_id', item.cart_id)
+
+  if ((count ?? 0) === 0) {
+    await supabase
+      .from('carts')
+      .update({ store_id: null })
+      .eq('id', item.cart_id)
+  }
 
   return { success: true }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// clearCart — يُستخدم عند conflict (المستخدم يريد البدء من متجر جديد)
+// clearCart
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function clearCart(
   supabase: SupabaseClient,
   customerId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const cart = await getOrCreateActiveCart(supabase, customerId)
+  const { data: cart } = await supabase
+    .from('carts')
+    .select('id')
+    .eq('customer_id', customerId)
+    .eq('status', 'active')
+    .maybeSingle()
 
-  // حذف كل العناصر (ON DELETE CASCADE من carts — لكن نحذفها يدويًا للوضوح)
-  await supabase
+  if (!cart) return { success: true }
+
+  const { error } = await supabase
     .from('cart_items')
     .delete()
     .eq('cart_id', cart.id)
 
-  // مسح store_id
+  if (error) return { success: false, error: 'فشل إفراغ السلة' }
+
   await supabase
     .from('carts')
     .update({ store_id: null })
     .eq('id', cart.id)
 
   return { success: true }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// getCartItemCount — للـ badge في الـ header
-// ─────────────────────────────────────────────────────────────────────────────
-
-export async function getCartItemCount(
-  supabase: SupabaseClient,
-  customerId: string
-): Promise<number> {
-  const { data } = await supabase
-    .from('carts')
-    .select('cart_items(quantity)')
-    .eq('customer_id', customerId)
-    .eq('status', 'active')
-    .maybeSingle()
-
-  if (!data) return 0
-
-  const items = (data as any).cart_items as { quantity: number }[] ?? []
-  return items.reduce((sum, item) => sum + item.quantity, 0)
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Private helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function clearStoreIdIfEmpty(
-  supabase: SupabaseClient,
-  customerId: string
-): Promise<void> {
-  const { data: cart } = await supabase
-    .from('carts')
-    .select('id, cart_items(id)')
-    .eq('customer_id', customerId)
-    .eq('status', 'active')
-    .maybeSingle()
-
-  if (!cart) return
-
-  const itemCount = ((cart as any).cart_items as any[])?.length ?? 0
-  if (itemCount === 0) {
-    await supabase
-      .from('carts')
-      .update({ store_id: null })
-      .eq('id', cart.id)
-  }
 }
