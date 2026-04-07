@@ -125,15 +125,16 @@ export function useCart(userId: string | null): UseCartReturn {
   }, [userId, fetchCart])
 
   // ── المجاميع ───────────────────────────────────────────────────────────────
-  const safeCartItems = Array.isArray(cart?.cart_items) ? cart!.cart_items.filter((item) => item && typeof item.quantity === 'number') : []
+  const safeCartItems = Array.isArray(cart?.cart_items) ? cart.cart_items : []
 
   const itemCount = safeCartItems.reduce(
-    (sum, item) => sum + Math.max(0, Number(item.quantity) || 0), 0
+    (sum, item) => sum + Number(item?.quantity ?? 0),
+    0
   )
 
   const subtotal = safeCartItems.reduce((sum, item) => {
-    const unitPrice = Number(item?.products?.price ?? item?.unit_price ?? 0)
-    const quantity = Math.max(0, Number(item?.quantity) || 0)
+    const quantity = Number(item?.quantity ?? 0)
+    const unitPrice = Number((item as any)?.products?.price ?? (item as any)?.unit_price ?? 0)
     return sum + quantity * unitPrice
   }, 0)
 
