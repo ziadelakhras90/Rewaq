@@ -8,8 +8,6 @@ import { AuthInput } from '@/components/auth/auth-input'
 import { getAppUrl } from '@/lib/utils/app-url'
 
 export default function ForgotPasswordPage() {
-  const supabase = createClient()
-
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
@@ -29,6 +27,7 @@ export default function ForgotPasswordPage() {
       const origin = getAppUrl()
      const redirectTo = `${origin}/auth/callback?next=/auth/reset-password`
 
+      const supabase = createClient()
       const { error: authError } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
         redirectTo,
       })
