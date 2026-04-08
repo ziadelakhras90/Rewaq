@@ -53,6 +53,7 @@ export interface PaginatedProducts {
   totalPages: number
 }
 
+
 export interface StoreListItem {
   id: string
   name: string
@@ -61,7 +62,6 @@ export interface StoreListItem {
   logo_url: string | null
   cover_url: string | null
   city: string | null
-  product_count: number
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -274,7 +274,6 @@ export async function getActiveCategories(
   return data ?? []
 }
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // getActiveStores — لصفحات دليل المتاجر
 // ─────────────────────────────────────────────────────────────────────────────
@@ -284,16 +283,7 @@ export async function getActiveStores(
 ): Promise<StoreListItem[]> {
   const { data, error } = await supabase
     .from('stores')
-    .select(`
-      id,
-      name,
-      slug,
-      description,
-      logo_url,
-      cover_url,
-      city,
-      products(count)
-    `)
+    .select('id, name, slug, description, logo_url, cover_url, city')
     .eq('status', 'active')
     .order('name', { ascending: true })
 
@@ -302,16 +292,7 @@ export async function getActiveStores(
     return []
   }
 
-  return (data ?? []).map((store: any) => ({
-    id: store.id,
-    name: store.name,
-    slug: store.slug,
-    description: store.description,
-    logo_url: store.logo_url,
-    cover_url: store.cover_url,
-    city: store.city,
-    product_count: Number(store.products?.[0]?.count ?? 0),
-  }))
+  return data ?? []
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -324,16 +305,7 @@ export async function getStoreBySlug(
 ): Promise<StoreListItem | null> {
   const { data, error } = await supabase
     .from('stores')
-    .select(`
-      id,
-      name,
-      slug,
-      description,
-      logo_url,
-      cover_url,
-      city,
-      products(count)
-    `)
+    .select('id, name, slug, description, logo_url, cover_url, city')
     .eq('slug', slug)
     .eq('status', 'active')
     .maybeSingle()
@@ -343,16 +315,5 @@ export async function getStoreBySlug(
     return null
   }
 
-  if (!data) return null
-
-  return {
-    id: data.id,
-    name: data.name,
-    slug: data.slug,
-    description: data.description,
-    logo_url: data.logo_url,
-    cover_url: data.cover_url,
-    city: data.city,
-    product_count: Number((data as any).products?.[0]?.count ?? 0),
-  }
+  return data ?? null
 }
