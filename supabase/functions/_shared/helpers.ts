@@ -19,9 +19,29 @@ export function getAdminClient(): SupabaseClient {
 
   return createClient(url, key, {
     auth: {
-      autoRefreshToken:  false,
-      persistSession:    false,
-    }
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  })
+}
+
+export function getRequestAuthClient(req: Request): SupabaseClient {
+  const url = Deno.env.get('SUPABASE_URL')
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || req.headers.get('apikey')
+  const authHeader = req.headers.get('Authorization') || req.headers.get('authorization') || ''
+
+  if (!url || !anonKey) {
+    throw new Error('SUPABASE_URL أو SUPABASE_ANON_KEY غير موجود في البيئة')
+  }
+
+  return createClient(url, anonKey, {
+    global: {
+      headers: authHeader ? { Authorization: authHeader } : {},
+    },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
   })
 }
 
@@ -64,19 +84,35 @@ export async function requireUser(
   req: Request,
   supabase: SupabaseClient
 ): Promise<{ id: string; email: string }> {
-  const authHeader = req.headers.get('Authorization')
+  const authHeader = req.headers.get('Authorization') || req.headers.get('authorization')
+
   if (!authHeader?.startsWith('Bearer ')) {
     throw new AuthError('Authorization header مفقود')
   }
 
   const token = authHeader.replace('Bearer ', '').trim()
-  const { data: { user }, error } = await supabase.auth.getUser(token)
 
-  if (error || !user) {
-    throw new AuthError('JWT غير صالح أو منتهي الصلاحية')
+  const { data: serviceData, error: serviceError } = await supabase.auth.getUser(token)
+  if (serviceData?.user && !serviceError) {
+    return { id: serviceData.user.id, email: serviceData.user.email ?? '' }
   }
 
-  return { id: user.id, email: user.email ?? '' }
+  console.error('requireUser service-role getUser failed:', serviceError)
+
+  try {
+    const requestClient = getRequestAuthClient(req)
+    const { data: requestData, error: requestError } = await requestClient.auth.getUser()
+
+    if (requestData?.user && !requestError) {
+      return { id: requestData.user.id, email: requestData.user.email ?? '' }
+    }
+
+    console.error('requireUser request-auth getUser failed:', requestError)
+  } catch (fallbackError) {
+    console.error('requireUser fallback client failed:', fallbackError)
+  }
+
+  throw new AuthError('تعذر التحقق من جلسة المستخدم الحالية')
 }
 
 /**
