@@ -21,6 +21,14 @@ import {
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
+const CART_UPDATED_EVENT = 'rewq-cart-updated'
+
+function emitCartUpdated() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(CART_UPDATED_EVENT))
+  }
+}
+
 export interface UseCartReturn {
   cart:           CartWithItems | null
   itemCount:      number
@@ -69,6 +77,14 @@ export function useCart(userId: string | null): UseCartReturn {
     fetchCart()
   }, [fetchCart])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleCartUpdated = () => { void fetchCart() }
+    window.addEventListener(CART_UPDATED_EVENT, handleCartUpdated)
+    return () => window.removeEventListener(CART_UPDATED_EVENT, handleCartUpdated)
+  }, [fetchCart])
+
   // ── Realtime: تحديث السلة عند تغيير cart_items ───────────────────────────
   useEffect(() => {
     if (channelRef.current) {
@@ -112,7 +128,10 @@ export function useCart(userId: string | null): UseCartReturn {
     if (!userId) return { success: false, error: 'يجب تسجيل الدخول أولًا' }
 
     const result = await addToCartService(supabase, userId, productId, quantity)
-    if (result.success) await fetchCart()
+    if (result.success) {
+      emitCartUpdated()
+      await fetchCart()
+    }
     return result
   }, [userId, fetchCart])
 
@@ -123,6 +142,7 @@ export function useCart(userId: string | null): UseCartReturn {
   ): Promise<void> => {
     if (!userId) return
     await updateCartItemQuantity(supabase, userId, itemId, quantity)
+    emitCartUpdated()
     await fetchCart()
   }, [userId, fetchCart])
 
@@ -130,6 +150,7 @@ export function useCart(userId: string | null): UseCartReturn {
   const removeItem = useCallback(async (itemId: string): Promise<void> => {
     if (!userId) return
     await removeFromCartService(supabase, userId, itemId)
+    emitCartUpdated()
     await fetchCart()
   }, [userId, fetchCart])
 
@@ -137,6 +158,7 @@ export function useCart(userId: string | null): UseCartReturn {
   const clear = useCallback(async (): Promise<void> => {
     if (!userId) return
     await clearCartService(supabase, userId)
+    emitCartUpdated()
     await fetchCart()
   }, [userId, fetchCart])
 
@@ -144,11 +166,11 @@ export function useCart(userId: string | null): UseCartReturn {
   const safeCartItems = Array.isArray(cart?.cart_items) ? cart.cart_items : []
 
   const itemCount = safeCartItems.reduce(
-    (sum, item) => sum + Number(item?.quantity ?? 0),
+    (sum: number, item: any) => sum + Number(item?.quantity ?? 0),
     0
   )
 
-  const subtotal = safeCartItems.reduce((sum, item) => {
+  const subtotal = safeCartItems.reduce((sum: number, item: any) => {
     const quantity = Number(item?.quantity ?? 0)
     const unitPrice = Number((item as any)?.products?.price ?? (item as any)?.unit_price ?? 0)
     return sum + quantity * unitPrice
