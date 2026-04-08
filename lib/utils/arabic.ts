@@ -67,7 +67,6 @@ export function formatDateTime(date: string | Date): string {
 
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   pending: 'قيد الانتظار',
-  under_review: 'قيد المراجعة',
   confirmed: 'مؤكد',
   processing: 'قيد التجهيز',
   shipped: 'تم الشحن',
