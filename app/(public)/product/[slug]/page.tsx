@@ -10,7 +10,6 @@ import { getProductBySlug, getProducts } from '@/services/catalog.service'
 import { ProductGallery } from '@/components/product/product-gallery'
 import { ProductInfo } from '@/components/product/product-info'
 import { RelatedProducts } from '@/components/product/related-products'
-import { CurrentStoreBridge } from '@/components/layout/current-store-bridge'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -84,7 +83,6 @@ export default async function ProductPage({ params }: PageProps) {
 
   return (
     <div dir="rtl" className="min-h-screen bg-stone-50">
-      <CurrentStoreBridge store={{ id: store.id, name: store.name, slug: store.slug }} />
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <Breadcrumb
           storeName={store.name}
@@ -138,7 +136,7 @@ function Breadcrumb({
         تصفح المنتجات
       </Link>
       <span>/</span>
-      <Link href={storeSlug ? `/stores/${storeSlug}` : '/stores'} className="text-stone-600 hover:text-amber-700 transition">{storeName}</Link>
+      <span className="text-stone-600">{storeName}</span>
       {categoryName && (
         <>
           <span>/</span>

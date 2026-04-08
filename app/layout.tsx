@@ -5,7 +5,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { getServerAppUrl } from '@/lib/utils/app-url'
-import { CurrentStoreProvider } from '@/components/layout/current-store-context'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Metadata
@@ -59,7 +58,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen bg-stone-50 antialiased">
-        <CurrentStoreProvider>{children}</CurrentStoreProvider>
+        {children}
       </body>
     </html>
   )
