@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getOrderDetails } from '@/services/order.service'
 import { OrderDetailsView } from '@/components/account/order-details'
+import { CurrentStoreBridge } from '@/components/layout/current-store-bridge'
 
 interface PageProps {
   params: Promise<{ orderNumber: string }>
@@ -44,6 +45,7 @@ export default async function OrderDetailsPage({ params }: PageProps) {
           <p className="text-sm text-stone-400">العودة إلى الطلبات</p>
         </div>
 
+        <CurrentStoreBridge store={order.stores ? { id: order.stores.id, name: order.stores.name, slug: order.stores.slug } : null} />
         <OrderDetailsView order={order} />
       </div>
     </div>
