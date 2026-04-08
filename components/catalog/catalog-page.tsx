@@ -23,6 +23,12 @@ interface Category {
 
 export type SortOption = 'newest' | 'price_asc' | 'price_desc' | 'featured'
 
+export interface StoreListItem {
+  id: string
+  name: string
+  slug: string
+}
+
 interface CatalogPageProps {
   searchParams: {
     q?:         string
@@ -34,11 +40,14 @@ interface CatalogPageProps {
     page?:      string
   }
   categories: Category[]
+  stores?: StoreListItem[]
+  currentStore?: StoreListItem | null
+  fixedStoreId?: string
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function CatalogPage({ searchParams, categories }: CatalogPageProps) {
+export function CatalogPage({ searchParams, categories, stores: _stores, currentStore: _currentStore, fixedStoreId }: CatalogPageProps) {
   const router        = useRouter()
   const pathname      = usePathname()
   const params        = useSearchParams()
@@ -53,6 +62,7 @@ export function CatalogPage({ searchParams, categories }: CatalogPageProps) {
   // قراءة الـ filters من URL
   const query      = params.get('q')          ?? ''
   const categoryId = params.get('category')   ?? ''
+  const storeId    = fixedStoreId ?? params.get('store') ?? ''
   const minPrice   = params.get('min_price')  ?? ''
   const maxPrice   = params.get('max_price')  ?? ''
   const sort       = (params.get('sort')      ?? 'newest') as SortOption
@@ -66,6 +76,7 @@ export function CatalogPage({ searchParams, categories }: CatalogPageProps) {
       const data = await getProducts(supabase, {
         search:     query      || undefined,
         categoryId: categoryId || undefined,
+        storeId:    storeId    || undefined,
         minPrice:   minPrice   ? parseFloat(minPrice) : undefined,
         maxPrice:   maxPrice   ? parseFloat(maxPrice) : undefined,
         isFeatured: sort === 'featured' ? true : undefined,
@@ -79,7 +90,7 @@ export function CatalogPage({ searchParams, categories }: CatalogPageProps) {
     } finally {
       setLoading(false)
     }
-  }, [query, categoryId, minPrice, maxPrice, sort, page])
+  }, [query, categoryId, storeId, minPrice, maxPrice, sort, page])
 
   useEffect(() => { fetchProducts() }, [fetchProducts])
 
@@ -111,7 +122,7 @@ export function CatalogPage({ searchParams, categories }: CatalogPageProps) {
     })
   }
 
-  const hasActiveFilters = !!(query || categoryId || minPrice || maxPrice)
+  const hasActiveFilters = !!(query || categoryId || storeId || minPrice || maxPrice)
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
