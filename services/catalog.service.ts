@@ -53,6 +53,16 @@ export interface PaginatedProducts {
   totalPages: number
 }
 
+export interface StoreListItem {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  logo_url: string | null
+  cover_url: string | null
+  city: string | null
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // getProducts — للـ marketplace listing
 // ─────────────────────────────────────────────────────────────────────────────
@@ -261,4 +271,49 @@ export async function getActiveCategories(
   }
 
   return data ?? []
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// getActiveStores — لصفحات دليل المتاجر
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function getActiveStores(
+  supabase: SupabaseClient<Database, 'public', any>
+): Promise<StoreListItem[]> {
+  const { data, error } = await supabase
+    .from('stores')
+    .select('id, name, slug, description, logo_url, cover_url, city')
+    .eq('status', 'active')
+    .order('name', { ascending: true })
+
+  if (error) {
+    console.error('getActiveStores error:', error)
+    return []
+  }
+
+  return data ?? []
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// getStoreBySlug — لصفحة متجر منفردة
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function getStoreBySlug(
+  supabase: SupabaseClient<Database, 'public', any>,
+  slug: string
+): Promise<StoreListItem | null> {
+  const { data, error } = await supabase
+    .from('stores')
+    .select('id, name, slug, description, logo_url, cover_url, city')
+    .eq('slug', slug)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  if (error) {
+    console.error('getStoreBySlug error:', error)
+    return null
+  }
+
+  return data ?? null
 }
