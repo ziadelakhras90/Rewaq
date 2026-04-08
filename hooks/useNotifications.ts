@@ -6,16 +6,41 @@ import type { Database } from '@/types/database.types'
 
 type NotificationRow = Database['public']['Tables']['notifications']['Row']
 
-export function useNotifications(userId: string | null) {
+interface NotificationOptions {
+  loadItems?: boolean
+}
+
+export function useNotifications(userId: string | null, options: NotificationOptions = {}) {
   const supabase = createClient()
+  const loadItemsEnabled = options.loadItems ?? false
+
   const [items, setItems] = useState<NotificationRow[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(false)
 
-  const load = useCallback(async () => {
+  const loadUnreadCount = useCallback(async () => {
     if (!userId) {
-      setItems([])
       setUnreadCount(0)
+      return
+    }
+
+    const { count, error } = await supabase
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('is_read', false)
+
+    if (error) {
+      console.error('useNotifications unreadCount error:', error)
+      return
+    }
+
+    setUnreadCount(count ?? 0)
+  }, [supabase, userId])
+
+  const loadItems = useCallback(async () => {
+    if (!userId || !loadItemsEnabled) {
+      if (!loadItemsEnabled) setItems([])
       return
     }
 
@@ -28,7 +53,7 @@ export function useNotifications(userId: string | null) {
       .limit(8)
 
     if (error) {
-      console.error('useNotifications load error:', error)
+      console.error('useNotifications load items error:', error)
       setLoading(false)
       return
     }
@@ -37,7 +62,7 @@ export function useNotifications(userId: string | null) {
     setItems(safeItems)
     setUnreadCount(safeItems.filter((item) => !item.is_read).length)
     setLoading(false)
-  }, [supabase, userId])
+  }, [loadItemsEnabled, supabase, userId])
 
   async function markAllAsRead() {
     if (!userId || unreadCount === 0) return
@@ -52,7 +77,8 @@ export function useNotifications(userId: string | null) {
       return
     }
 
-    await load()
+    setItems((prev) => prev.map((item) => ({ ...item, is_read: true })))
+    setUnreadCount(0)
   }
 
   async function markAsRead(id: string) {
@@ -68,22 +94,31 @@ export function useNotifications(userId: string | null) {
       return
     }
 
-    await load()
+    setItems((prev) => prev.map((item) => item.id === id ? { ...item, is_read: true } : item))
+    setUnreadCount((prev) => Math.max(0, prev - 1))
   }
 
   useEffect(() => {
-    load()
+    void loadUnreadCount()
     if (!userId) return
 
-    const interval = window.setInterval(load, 30000)
+    const interval = window.setInterval(() => {
+      void loadUnreadCount()
+    }, 60000)
+
     return () => window.clearInterval(interval)
-  }, [load, userId])
+  }, [loadUnreadCount, userId])
+
+  useEffect(() => {
+    if (!loadItemsEnabled) return
+    void loadItems()
+  }, [loadItems, loadItemsEnabled])
 
   return {
     items,
     unreadCount,
     loading,
-    reload: load,
+    reload: loadItems,
     markAllAsRead,
     markAsRead,
   }
