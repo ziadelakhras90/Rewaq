@@ -57,7 +57,10 @@ export default async function ProductPage({ params }: PageProps) {
       if (a.is_primary !== b.is_primary) return a.is_primary ? -1 : 1
       return a.sort_order - b.sort_order
     })
-    .map(({ url, alt_text }) => ({ url, alt_text }))
+    .map((img: { url: string; alt_text: string | null }) => ({
+      url: img.url,
+      alt_text: img.alt_text,
+    }))
 
   const rawStore = Array.isArray((product as any).stores)
     ? (product as any).stores[0]
