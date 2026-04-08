@@ -5,7 +5,7 @@
 
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient }  from '@/lib/supabase/client'
 import {
   getCartWithItems,
@@ -42,6 +42,8 @@ export interface UseCartReturn {
 export function useCart(userId: string | null): UseCartReturn {
   const supabase = createClient()
 
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+
   const [cart,    setCart]    = useState<CartWithItems | null>(null)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState<string | null>(null)
@@ -69,10 +71,17 @@ export function useCart(userId: string | null): UseCartReturn {
 
   // ── Realtime: تحديث السلة عند تغيير cart_items ───────────────────────────
   useEffect(() => {
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current)
+      channelRef.current = null
+    }
+
     if (!userId || !cart?.id) return
 
+    const channelName = `cart:${cart.id}:${userId}:${Math.random().toString(36).slice(2)}`
+
     const channel = supabase
-      .channel(`cart:${cart.id}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -81,12 +90,19 @@ export function useCart(userId: string | null): UseCartReturn {
           table:  'cart_items',
           filter: `cart_id=eq.${cart.id}`,
         },
-        () => { fetchCart() }
+        () => { void fetchCart() }
       )
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
-  }, [userId, cart?.id])
+    channelRef.current = channel
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+      }
+    }
+  }, [userId, cart?.id, fetchCart, supabase])
 
   // ── addItem ────────────────────────────────────────────────────────────────
   const addItem = useCallback(async (
