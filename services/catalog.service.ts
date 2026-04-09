@@ -16,6 +16,7 @@ type ProductRow = Database['public']['Tables']['products']['Row']
 export interface ProductFilters {
   categoryId?:  string
   storeId?:     string
+  storeSearch?: string
   minPrice?:    number
   maxPrice?:    number
   search?:      string
@@ -45,24 +46,22 @@ export interface ProductListItem {
   primary_image: string | null
 }
 
-export interface PaginatedProducts {
-  data:       ProductListItem[]
-  total:      number
-  page:       number
-  pageSize:   number
-  totalPages: number
-}
-
-
 export interface StoreListItem {
   id: string
   name: string
   slug: string
   description: string | null
   logo_url: string | null
-  cover_url: string | null
   city: string | null
-  product_count?: number
+  product_count: number
+}
+
+export interface PaginatedProducts {
+  data:       ProductListItem[]
+  total:      number
+  page:       number
+  pageSize:   number
+  totalPages: number
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -76,6 +75,7 @@ export async function getProducts(
   const {
     categoryId,
     storeId,
+    storeSearch,
     minPrice,
     maxPrice,
     search,
@@ -116,6 +116,7 @@ export async function getProducts(
 
   if (categoryId) query = query.eq('category_id', categoryId)
   if (storeId)    query = query.eq('store_id', storeId)
+  if (storeSearch?.trim()) query = query.ilike('stores.name', `%${storeSearch.trim()}%`)
   if (isFeatured) query = query.eq('is_featured', true)
   if (minPrice !== undefined) query = query.gte('price', minPrice)
   if (maxPrice !== undefined) query = query.lte('price', maxPrice)
@@ -275,33 +276,56 @@ export async function getActiveCategories(
   return data ?? []
 }
 
+
 // ─────────────────────────────────────────────────────────────────────────────
-// getActiveStores — لصفحات دليل المتاجر
+// getActiveStores — صفحة المتاجر + فلاتر المتجر
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function getActiveStores(
-  supabase: SupabaseClient<Database, 'public', any>
+  supabase: SupabaseClient<Database, 'public', any>,
+  search?: string
 ): Promise<StoreListItem[]> {
-  const { data, error } = await supabase
+  let query = supabase
     .from('stores')
-    .select('id, name, slug, description, logo_url, cover_url, city')
+    .select('id, name, slug, description, logo_url, city')
     .eq('status', 'active')
-    .order('name', { ascending: true })
+    .order('created_at', { ascending: false })
+
+  if (search?.trim()) {
+    query = query.ilike('name', `%${search.trim()}%`)
+  }
+
+  const { data, error } = await query
 
   if (error) {
     console.error('getActiveStores error:', error)
     return []
   }
 
-    return (data ?? []).map((store) => ({
+  const stores = (data ?? []) as Array<{ id: string; name: string; slug: string; description: string | null; logo_url: string | null; city: string | null }>
+
+  if (stores.length === 0) return []
+
+  const { data: productRows } = await supabase
+    .from('products')
+    .select('store_id')
+    .eq('status', 'active')
+    .in('store_id', stores.map((store) => store.id))
+
+  const counts = new Map<string, number>()
+  for (const row of productRows ?? []) {
+    const storeId = (row as any).store_id as string
+    counts.set(storeId, (counts.get(storeId) ?? 0) + 1)
+  }
+
+  return stores.map((store) => ({
     ...store,
-    product_count: 0,
+    product_count: counts.get(store.id) ?? 0,
   }))
 }
 
-
 // ─────────────────────────────────────────────────────────────────────────────
-// getStoreBySlug — لصفحة متجر منفردة
+// getStoreBySlug — صفحة المتجر
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function getStoreBySlug(
@@ -310,7 +334,7 @@ export async function getStoreBySlug(
 ): Promise<StoreListItem | null> {
   const { data, error } = await supabase
     .from('stores')
-    .select('id, name, slug, description, logo_url, cover_url, city')
+    .select('id, name, slug, description, logo_url, city')
     .eq('slug', slug)
     .eq('status', 'active')
     .maybeSingle()
@@ -320,6 +344,16 @@ export async function getStoreBySlug(
     return null
   }
 
-    return data ? { ...data, product_count: 0 } : null
-}
+  if (!data) return null
 
+  const { count } = await supabase
+    .from('products')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'active')
+    .eq('store_id', data.id)
+
+  return {
+    ...(data as any),
+    product_count: count ?? 0,
+  } as StoreListItem
+}

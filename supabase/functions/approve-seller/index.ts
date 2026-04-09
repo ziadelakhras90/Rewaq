@@ -20,8 +20,8 @@ import {
 import type { ApproveSellerRequest, ApproveSellerResponse } from '../../../types/api.types.ts'
 
 Deno.serve(async (req: Request): Promise<Response> => {
-  if (req.method === 'OPTIONS') return handleOptions()
-  if (req.method !== 'POST')    return json({ error: 'Method not allowed' }, 405)
+  if (req.method === 'OPTIONS') return handleOptions(req)
+  if (req.method !== 'POST')    return json({ error: 'Method not allowed' }, 405, req)
 
   const supabase = getAdminClient()
 
@@ -109,9 +109,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     })
 
     const response: ApproveSellerResponse = { success: true }
-    return json(response)
+    return json(response, 200, req)
 
   } catch (err) {
-    return handleError(err)
+    return handleError(err, req)
   }
 })

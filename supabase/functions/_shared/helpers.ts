@@ -55,20 +55,32 @@ export const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-export function json(data: unknown, status = 200): Response {
+export function getCorsHeaders(req?: Request): Record<string, string> {
+  const origin = req?.headers.get('origin')?.trim() || '*'
+  const requestHeaders = req?.headers.get('access-control-request-headers')?.trim()
+
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': corsHeaders['Access-Control-Allow-Methods'],
+    'Access-Control-Allow-Headers': requestHeaders || corsHeaders['Access-Control-Allow-Headers'],
+    Vary: 'Origin, Access-Control-Request-Headers',
+  }
+}
+
+export function json(data: unknown, status = 200, req?: Request): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
-      ...corsHeaders,
+      ...getCorsHeaders(req),
       'Content-Type': 'application/json',
     },
   })
 }
 
-export function handleOptions(): Response {
+export function handleOptions(req?: Request): Response {
   return new Response('ok', {
     status: 200,
-    headers: corsHeaders,
+    headers: getCorsHeaders(req),
   })
 }
 
@@ -309,7 +321,7 @@ export class ConflictError extends Error {
 /**
  * يحوّل أي خطأ إلى HTTP Response مناسب
  */
-export function handleError(err: unknown): Response {
+export function handleError(err: unknown, req?: Request): Response {
   if (
     err instanceof AuthError      ||
     err instanceof ForbiddenError ||
@@ -317,9 +329,9 @@ export function handleError(err: unknown): Response {
     err instanceof NotFoundError  ||
     err instanceof ConflictError
   ) {
-    return json({ error: err.message }, err.status)
+    return json({ error: err.message }, err.status, req)
   }
 
   console.error('Unhandled error:', err)
-  return json({ error: 'خطأ داخلي في الخادم' }, 500)
+  return json({ error: 'خطأ داخلي في الخادم' }, 500, req)
 }

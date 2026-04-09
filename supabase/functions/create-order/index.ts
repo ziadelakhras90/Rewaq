@@ -33,8 +33,8 @@ import type {
 // ─────────────────────────────────────────────────────────────────────────────
 
 Deno.serve(async (req: Request): Promise<Response> => {
-  if (req.method === 'OPTIONS') return handleOptions()
-  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
+  if (req.method === 'OPTIONS') return handleOptions(req)
+  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405, req)
 
   const supabase = getAdminClient()
 
@@ -149,10 +149,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
       orderNumber,
     }
 
-    return json(response, 201)
+    return json(response, 201, req)
 
   } catch (err) {
-    return handleError(err)
+    return handleError(err, req)
   }
 })
 

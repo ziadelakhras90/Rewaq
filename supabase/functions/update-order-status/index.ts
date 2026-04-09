@@ -56,8 +56,8 @@ const STATUS_NOTIFICATION: Partial<Record<OrderStatus, { title: string; body: st
 // ─────────────────────────────────────────────────────────────────────────────
 
 Deno.serve(async (req: Request): Promise<Response> => {
-  if (req.method === 'OPTIONS') return handleOptions()
-  if (req.method !== 'POST')    return json({ error: 'Method not allowed' }, 405)
+  if (req.method === 'OPTIONS') return handleOptions(req)
+  if (req.method !== 'POST')    return json({ error: 'Method not allowed' }, 405, req)
 
   const supabase = getAdminClient()
 
@@ -181,9 +181,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     const response: UpdateOrderStatusResponse = { success: true, newStatus }
-    return json(response)
+    return json(response, 200, req)
 
   } catch (err) {
-    return handleError(err)
+    return handleError(err, req)
   }
 })
