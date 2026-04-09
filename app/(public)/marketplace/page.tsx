@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { CatalogPage } from '@/components/catalog/catalog-page'
-import { getActiveCategories, getActiveStores } from '@/services/catalog.service'
+import { getActiveCategories } from '@/services/catalog.service'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
@@ -28,16 +28,11 @@ interface PageProps {
 export default async function MarketplacePage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams
   const supabase = await createClient()
-  const [categories, stores] = await Promise.all([
-    getActiveCategories(supabase),
-    getActiveStores(supabase),
-  ])
-
-  const currentStore = stores.find((store) => store.id === resolvedSearchParams.store) ?? null
+  const categories = await getActiveCategories(supabase)
 
   return (
     <Suspense fallback={null}>
-      <CatalogPage searchParams={resolvedSearchParams} categories={categories} stores={stores} currentStore={currentStore} />
+      <CatalogPage searchParams={resolvedSearchParams} categories={categories} />
     </Suspense>
   )
 }

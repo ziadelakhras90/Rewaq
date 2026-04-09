@@ -6,8 +6,6 @@ export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import { CurrentStoreBridge } from '@/components/layout/current-store-bridge'
 
 export const metadata: Metadata = {
   title: 'تم استلام طلبك — Rewq',
@@ -22,21 +20,9 @@ export default async function CheckoutSuccessPage({ searchParams }: PageProps) {
 
   if (!orderNumber) redirect('/')
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: order } = user ? await supabase
-    .from('orders')
-    .select('stores ( id, name, slug )')
-    .eq('order_number', orderNumber)
-    .eq('customer_id', user.id)
-    .maybeSingle() : { data: null } as any
-
-  const currentStore = (order as any)?.stores
-
   return (
     <div dir="rtl" className="flex min-h-screen items-center justify-center bg-stone-50 px-4">
       <div className="w-full max-w-md text-center">
-        <CurrentStoreBridge store={currentStore ? { id: currentStore.id, name: currentStore.name, slug: currentStore.slug } : null} />
         <div className="mb-6 flex justify-center">
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100">
             <svg className="h-10 w-10 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
