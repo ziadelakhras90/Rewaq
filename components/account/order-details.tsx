@@ -1,6 +1,7 @@
 import { OrderStatusBadge } from './order-status-badge'
 import { formatDateTime, formatCurrency, getOrderStatusLabel } from '@/lib/utils/arabic'
 import type { OrderDetails } from '@/services/order.service'
+import { CancelOrderButton } from './cancel-order-button'
 import type { Database } from '@/types/database.types'
 
 interface OrderDetailsProps {
@@ -23,9 +24,11 @@ export function OrderDetailsView({ order }: OrderDetailsProps) {
       {order.stores && (
         <div className="rounded-2xl border border-stone-200 bg-white p-5">
           <h2 className="mb-3 text-sm font-bold text-stone-700">المتجر</h2>
-          <p className="text-sm text-stone-800">{order.stores.name}</p>
+          <a href={order.stores.slug ? `/stores/${order.stores.slug}` : '/stores'} className="text-sm font-medium text-stone-800 hover:text-amber-700 transition">{order.stores.name}</a>
         </div>
       )}
+
+      <CancelOrderButton orderId={order.id} status={order.status} />
 
       <div className="rounded-2xl border border-stone-200 bg-white p-5">
         <h2 className="mb-3 text-sm font-bold text-stone-700">عنوان التوصيل</h2>
