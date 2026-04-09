@@ -72,7 +72,7 @@ export function AddToCartButton({
       setConflict(true)
     } else {
       setFeedback('error')
-      setErrorMessage(result.error ?? 'حدث خطأ، حاول مجددًا')
+      setErrorMessage('error' in result ? result.error : 'حدث خطأ، حاول مجددًا')
       setTimeout(() => setFeedback(null), 3000)
     }
   }
