@@ -3,8 +3,7 @@ import type { SellerOrderDetails } from '@/services/seller-orders.service'
 import { SellerOrderStatusForm } from './seller-order-status-form'
 
 export function SellerOrderDetailsView({ order }: { order: SellerOrderDetails }) {
-  const deliveryWebsite = extractWebsite(order.delivery_notes)
-  const customerWebsite = deliveryWebsite ?? extractWebsite(order.notes)
+  const websiteLink = extractWebsiteLink(order)
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr),360px]">
@@ -15,7 +14,9 @@ export function SellerOrderDetailsView({ order }: { order: SellerOrderDetails })
               <p className="text-sm text-stone-400">رقم الطلب</p>
               <h1 className="mt-1 text-2xl font-bold text-stone-900">{order.order_number}</h1>
             </div>
-            <span className="rounded-full border border-stone-200 bg-stone-50 px-4 py-2 text-sm font-semibold text-stone-700">{ORDER_STATUS_LABELS[order.status] ?? order.status}</span>
+            <span className="rounded-full border border-stone-200 bg-stone-50 px-4 py-2 text-sm font-semibold text-stone-700">
+              {ORDER_STATUS_LABELS[order.status] ?? order.status}
+            </span>
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -25,16 +26,22 @@ export function SellerOrderDetailsView({ order }: { order: SellerOrderDetails })
             <Info label="رقم الجوال" value={order.delivery_phone} />
             <Info label="المدينة" value={order.delivery_city} />
             <Info label="الحي / الشارع" value={`${order.delivery_district ?? '—'} / ${order.delivery_street ?? '—'}`} />
-            {customerWebsite && (
-              <LinkInfo label="الويب سايت" value={customerWebsite} href={customerWebsite} />
-            )}
-            {order.delivery_notes && (
-              <Info label={customerWebsite ? 'ملاحظات العنوان' : 'ملاحظات العنوان / الموقع'} value={order.delivery_notes} />
-            )}
-            {order.notes && (
-              <Info label="ملاحظات العميل" value={order.notes} />
-            )}
+            {websiteLink && <Info label="الويب سايت" value={websiteLink} href={websiteLink} />}
           </div>
+
+          {order.delivery_notes && (
+            <div className="mt-4 rounded-2xl bg-stone-50 p-4">
+              <p className="text-xs text-stone-400">ملاحظات التوصيل</p>
+              <p className="mt-1 whitespace-pre-wrap text-sm font-medium text-stone-700">{order.delivery_notes}</p>
+            </div>
+          )}
+
+          {order.notes && (
+            <div className="mt-4 rounded-2xl bg-stone-50 p-4">
+              <p className="text-xs text-stone-400">ملاحظات العميل</p>
+              <p className="mt-1 whitespace-pre-wrap text-sm font-medium text-stone-700">{order.notes}</p>
+            </div>
+          )}
         </section>
 
         <section className="rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
@@ -44,7 +51,9 @@ export function SellerOrderDetailsView({ order }: { order: SellerOrderDetails })
               <div key={item.id} className="flex items-center justify-between gap-4 rounded-2xl bg-stone-50 px-4 py-3">
                 <div>
                   <p className="font-semibold text-stone-900">{item.product_name}</p>
-                  <p className="mt-1 text-sm text-stone-400">{item.quantity} × {formatCurrency(item.unit_price)}</p>
+                  <p className="mt-1 text-sm text-stone-400">
+                    {item.quantity} × {formatCurrency(item.unit_price)}
+                  </p>
                 </div>
                 <p className="font-semibold text-stone-900">{formatCurrency(item.total_price)}</p>
               </div>
@@ -85,36 +94,22 @@ export function SellerOrderDetailsView({ order }: { order: SellerOrderDetails })
   )
 }
 
-function extractWebsite(value: string | null | undefined): string | null {
-  if (!value) return null
-  const match = value.match(/https?:\/\/[^\s|]+|www\.[^\s|]+/i)
-  if (!match) return null
-  const url = match[0].trim()
-  return /^https?:\/\//i.test(url) ? url : `https://${url}`
-}
-
-function Info({ label, value }: { label: string; value: string }) {
+function Info({ label, value, href }: { label: string; value: string; href?: string }) {
   return (
     <div className="rounded-2xl bg-stone-50 p-4">
       <p className="text-xs text-stone-400">{label}</p>
-      <p className="mt-1 whitespace-pre-line break-words text-sm font-semibold text-stone-800">{value}</p>
-    </div>
-  )
-}
-
-function LinkInfo({ label, value, href }: { label: string; value: string; href: string }) {
-  return (
-    <div className="rounded-2xl bg-stone-50 p-4">
-      <p className="text-xs text-stone-400">{label}</p>
-      <a
-        href={href}
-        target="_blank"
-        rel="noreferrer"
-        dir="ltr"
-        className="mt-1 block break-all text-sm font-semibold text-amber-700 underline decoration-amber-300 underline-offset-4"
-      >
-        {value}
-      </a>
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-1 block break-all text-sm font-semibold text-amber-700 hover:text-amber-800 hover:underline"
+        >
+          {value}
+        </a>
+      ) : (
+        <p className="mt-1 text-sm font-semibold text-stone-800">{value}</p>
+      )}
     </div>
   )
 }
@@ -126,4 +121,21 @@ function Row({ label, value, strong = false }: { label: string; value: string; s
       <span className={strong ? 'font-bold text-stone-900' : 'font-semibold text-stone-800'}>{value}</span>
     </div>
   )
+}
+
+function extractWebsiteLink(order: SellerOrderDetails): string | null {
+  const candidates = [order.notes, order.delivery_notes]
+
+  for (const candidate of candidates) {
+    const value = String(candidate ?? '').trim()
+    if (!value) continue
+
+    const match = value.match(/((?:https?:\/\/|www\.)[^\s|\n]+)/i)
+    if (!match) continue
+
+    const url = match[1].trim()
+    return /^https?:\/\//i.test(url) ? url : `https://${url}`
+  }
+
+  return null
 }

@@ -3,7 +3,7 @@
 // components/product/add-to-cart-button.tsx
 // refactored: CartConflictModal مستقل في components/cart/
 
-import { useState }  from 'react'
+import { useMemo, useState }  from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth }   from '@/hooks/useAuth'
 import { useCart }   from '@/hooks/useCart'
@@ -24,15 +24,23 @@ export function AddToCartButton({
 }: AddToCartButtonProps) {
   const router      = useRouter()
   const { user }    = useAuth()
-  const { addItem } = useCart(user?.id ?? null)
+  const { addItem, cart } = useCart(user?.id ?? null)
 
   const [qty,      setQty]      = useState(1)
   const [loading,  setLoading]  = useState(false)
   const [feedback, setFeedback] = useState<'success' | 'error' | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [conflict, setConflict] = useState(false)
 
+  const currentItemQuantity = useMemo(() => {
+    const existingItem = cart?.cart_items?.find((item) => item.product_id === productId)
+    return Number(existingItem?.quantity ?? 0)
+  }, [cart, productId])
+
+  const remainingStock = trackInventory ? Math.max(0, stockQuantity - currentItemQuantity) : null
   const outOfStock = trackInventory && stockQuantity === 0
-  const maxQty     = trackInventory ? stockQuantity : 99
+  const reachedCartLimit = trackInventory && remainingStock === 0 && currentItemQuantity > 0
+  const maxQty = trackInventory ? Math.max(1, Math.min(99, remainingStock ?? stockQuantity)) : 99
 
   async function handleAdd() {
     if (!user) {
@@ -42,7 +50,19 @@ export function AddToCartButton({
     }
     setLoading(true)
     setFeedback(null)
-    const result = await addItem(productId, qty)
+    setErrorMessage(null)
+
+    const quantityToAdd = trackInventory ? Math.min(qty, Math.max(0, remainingStock ?? qty)) : qty
+
+    if (trackInventory && quantityToAdd <= 0) {
+      setLoading(false)
+      setFeedback('error')
+      setErrorMessage('وصلت للحد المتاح في السلة')
+      setTimeout(() => setFeedback(null), 3000)
+      return
+    }
+
+    const result = await addItem(productId, quantityToAdd)
     setLoading(false)
 
     if (result.success) {
@@ -52,6 +72,7 @@ export function AddToCartButton({
       setConflict(true)
     } else {
       setFeedback('error')
+      setErrorMessage(result.error ?? 'حدث خطأ، حاول مجددًا')
       setTimeout(() => setFeedback(null), 3000)
     }
   }
@@ -71,7 +92,7 @@ export function AddToCartButton({
               </button>
               <span className="w-8 text-center text-sm font-medium text-stone-800">{qty}</span>
               <button onClick={() => setQty(q => Math.min(maxQty, q + 1))}
-                disabled={trackInventory && qty >= stockQuantity}
+                disabled={trackInventory && qty >= maxQty}
                 className="flex h-9 w-9 items-center justify-center text-stone-500 hover:text-stone-800 disabled:opacity-30 transition">
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -81,7 +102,17 @@ export function AddToCartButton({
           </div>
         )}
 
-        <button onClick={handleAdd} disabled={outOfStock || loading}
+        {trackInventory && currentItemQuantity > 0 && (
+          <p className="text-xs text-stone-500">
+            لديك بالفعل {currentItemQuantity} في السلة{remainingStock !== null ? ` — المتاح إضافته الآن: ${remainingStock}` : ''}
+          </p>
+        )}
+
+        {feedback === 'error' && errorMessage && (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{errorMessage}</div>
+        )}
+
+        <button onClick={handleAdd} disabled={outOfStock || reachedCartLimit || loading}
           className={`flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold transition
             ${outOfStock ? 'cursor-not-allowed bg-stone-100 text-stone-400'
               : feedback === 'success' ? 'bg-emerald-500 text-white'
@@ -89,8 +120,9 @@ export function AddToCartButton({
               : 'bg-amber-500 text-white hover:bg-amber-600 active:scale-95 shadow-sm'}`}>
           {loading ? <><Spinner /> جاري الإضافة…</>
            : feedback === 'success' ? <><CheckIcon /> أُضيف إلى السلة</>
-           : feedback === 'error' ? 'حدث خطأ، حاول مجددًا'
+           : feedback === 'error' ? (errorMessage ?? 'حدث خطأ، حاول مجددًا')
            : outOfStock ? 'نفد المخزون'
+           : reachedCartLimit ? 'وصلت للحد المتاح في السلة'
            : <><CartIcon /> أضف إلى السلة</>}
         </button>
       </div>
