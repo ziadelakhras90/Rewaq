@@ -66,7 +66,7 @@ export function StoresDirectory({ stores }: { stores: StoreListItem[] }) {
                       <h2 className="text-lg font-bold text-stone-900">{store.name}</h2>
                       {store.city && <p className="mt-1 text-sm text-stone-400">{store.city}</p>}
                     </div>
-                    <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">{store.product_count.toLocaleString('ar-EG')} منتج</span>
+                    <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">{(store.product_count ?? 0).toLocaleString('ar-EG')} منتج</span>
                   </div>
                   {store.description && <p className="line-clamp-2 text-sm leading-7 text-stone-500">{store.description}</p>}
                   <div className="flex items-center justify-between border-t border-stone-100 pt-4 text-sm font-semibold text-amber-700">
