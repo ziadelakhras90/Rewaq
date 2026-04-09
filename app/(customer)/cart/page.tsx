@@ -1,14 +1,17 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
+import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { useCart } from '@/hooks/useCart'
 import { CartList } from '@/components/cart/cart-list'
 import { CartSummary } from '@/components/cart/cart-summary'
 import { CartEmptyState } from '@/components/cart/cart-empty-state'
 import { ProductGridSkeleton } from '@/components/catalog/product-card-skeleton'
+import { CurrentStoreBridge } from '@/components/layout/current-store-bridge'
 
 export default function CartPage() {
+  const searchParams = useSearchParams()
   const { user, loading: authLoading } = useAuth()
   const {
     cart,
@@ -32,11 +35,21 @@ export default function CartPage() {
   }
 
   const storeName = (cart as any)?.stores?.name as string | undefined
+  const returnReason = searchParams.get('reason')
+
+  const headerStore = (cart as any)?.stores ? { id: (cart as any).stores.id, name: (cart as any).stores.name, slug: (cart as any).stores.slug } : null
 
   return (
     <div dir="rtl" className="min-h-screen bg-stone-50">
+      <CurrentStoreBridge store={headerStore} />
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
         <div className="mb-8">
+          {returnReason === 'cart_unavailable' && (
+            <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">تعذر تحميل السلة قبل مراجعة الطلب. حدّث الصفحة وحاول مرة أخرى.</div>
+          )}
+          {returnReason === 'cart_empty' && (
+            <div className="mb-4 rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-600">لا يمكن متابعة الطلب لأن السلة فارغة الآن.</div>
+          )}
           <h1 className="text-2xl font-bold text-stone-900">سلة التسوق</h1>
           <p className="mt-1 text-sm text-stone-500">راجع القطع المختارة قبل الانتقال إلى صفحة الطلب الجديدة.</p>
           {itemCount > 0 && (

@@ -5,6 +5,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { CheckoutForm } from '@/components/checkout/checkout-form'
 import type { Address } from '@/components/checkout/address-selector'
+import { CurrentStoreBridge } from '@/components/layout/current-store-bridge'
 
 export const metadata: Metadata = {
   title: 'راجع طلبك قبل الإرسال — Rewq',
@@ -40,8 +41,12 @@ export default async function CheckoutPage() {
     ? (cart as any).cart_items
     : []
 
-  if (!cart || cartItems.length === 0) {
-    redirect('/cart')
+  if (!cart) {
+    redirect('/cart?reason=cart_unavailable')
+  }
+
+  if (cartItems.length === 0) {
+    redirect('/cart?reason=cart_empty')
   }
 
   const { data: addresses } = await supabase
@@ -59,6 +64,7 @@ export default async function CheckoutPage() {
   return (
     <div dir="rtl" className="min-h-screen bg-[#f4f1e8]">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <CurrentStoreBridge store={(cart as any)?.stores ? { id: (cart as any).stores.id, name: (cart as any).stores.name, slug: (cart as any).stores.slug } : null} />
         <CheckoutForm
           cart={cart as any}
           subtotal={subtotal}
