@@ -32,7 +32,6 @@ export function DesktopNav() {
       </Link>
 
       <NavLink href="/marketplace">المتجر</NavLink>
-      <NavLink href="/stores">المتاجر</NavLink>
       {!loading && !isSeller && <NavLink href="/become-seller">كن بائعًا</NavLink>}
       {!loading && isSeller && <NavLink href="/seller/orders">لوحة الطلبات</NavLink>}
       {!loading && isAdmin && <NavLink href="/admin">الإدارة</NavLink>}
@@ -243,7 +242,6 @@ export function MobileNav({ onClose }: { onClose: () => void }) {
       <div className="divide-y divide-stone-100">
         <MobileNavLink href="/" onClick={onClose}>الرئيسية</MobileNavLink>
         <MobileNavLink href="/marketplace" onClick={onClose}>المتجر</MobileNavLink>
-        <MobileNavLink href="/stores" onClick={onClose}>المتاجر</MobileNavLink>
 
         {!loading && !isSeller && !isAdmin && <MobileNavLink href="/become-seller" onClick={onClose}>كن بائعًا</MobileNavLink>}
         {!loading && isSeller && <MobileNavLink href="/seller/orders" onClick={onClose}>لوحة الطلبات</MobileNavLink>}

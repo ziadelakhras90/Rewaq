@@ -3,6 +3,9 @@ import type { SellerOrderDetails } from '@/services/seller-orders.service'
 import { SellerOrderStatusForm } from './seller-order-status-form'
 
 export function SellerOrderDetailsView({ order }: { order: SellerOrderDetails }) {
+  const deliveryWebsite = extractWebsite(order.delivery_notes)
+  const customerWebsite = deliveryWebsite ?? extractWebsite(order.notes)
+
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr),360px]">
       <div className="space-y-6">
@@ -22,6 +25,15 @@ export function SellerOrderDetailsView({ order }: { order: SellerOrderDetails })
             <Info label="رقم الجوال" value={order.delivery_phone} />
             <Info label="المدينة" value={order.delivery_city} />
             <Info label="الحي / الشارع" value={`${order.delivery_district ?? '—'} / ${order.delivery_street ?? '—'}`} />
+            {customerWebsite && (
+              <LinkInfo label="الويب سايت" value={customerWebsite} href={customerWebsite} />
+            )}
+            {order.delivery_notes && (
+              <Info label={customerWebsite ? 'ملاحظات العنوان' : 'ملاحظات العنوان / الموقع'} value={order.delivery_notes} />
+            )}
+            {order.notes && (
+              <Info label="ملاحظات العميل" value={order.notes} />
+            )}
           </div>
         </section>
 
@@ -73,11 +85,36 @@ export function SellerOrderDetailsView({ order }: { order: SellerOrderDetails })
   )
 }
 
+function extractWebsite(value: string | null | undefined): string | null {
+  if (!value) return null
+  const match = value.match(/https?:\/\/[^\s|]+|www\.[^\s|]+/i)
+  if (!match) return null
+  const url = match[0].trim()
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`
+}
+
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl bg-stone-50 p-4">
       <p className="text-xs text-stone-400">{label}</p>
-      <p className="mt-1 text-sm font-semibold text-stone-800">{value}</p>
+      <p className="mt-1 whitespace-pre-line break-words text-sm font-semibold text-stone-800">{value}</p>
+    </div>
+  )
+}
+
+function LinkInfo({ label, value, href }: { label: string; value: string; href: string }) {
+  return (
+    <div className="rounded-2xl bg-stone-50 p-4">
+      <p className="text-xs text-stone-400">{label}</p>
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        dir="ltr"
+        className="mt-1 block break-all text-sm font-semibold text-amber-700 underline decoration-amber-300 underline-offset-4"
+      >
+        {value}
+      </a>
     </div>
   )
 }
