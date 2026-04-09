@@ -1,12 +1,11 @@
-import { Suspense } from 'react'
-import CartPageClient from './cart-page-client'
+import dynamic from 'next/dynamic'
 
 export const dynamic = 'force-dynamic'
 
+const CartPageClient = dynamic(() => import('./cart-page-client'), {
+  ssr: false,
+})
+
 export default function CartPage() {
-  return (
-    <Suspense fallback={null}>
-      <CartPageClient />
-    </Suspense>
-  )
+  return <CartPageClient />
 }
