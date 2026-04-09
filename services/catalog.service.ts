@@ -62,6 +62,7 @@ export interface StoreListItem {
   logo_url: string | null
   cover_url: string | null
   city: string | null
+  product_count?: number
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -292,8 +293,12 @@ export async function getActiveStores(
     return []
   }
 
-  return data ?? []
+    return (data ?? []).map((store) => ({
+    ...store,
+    product_count: 0,
+  }))
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // getStoreBySlug — لصفحة متجر منفردة
@@ -315,5 +320,6 @@ export async function getStoreBySlug(
     return null
   }
 
-  return data ?? null
+    return data ? { ...data, product_count: 0 } : null
 }
+

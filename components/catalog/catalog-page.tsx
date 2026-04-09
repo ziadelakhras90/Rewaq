@@ -10,7 +10,7 @@ import { getProducts }       from '@/services/catalog.service'
 import { CatalogSearch }     from './catalog-search'
 import { CatalogFilters }    from './catalog-filters'
 import { ProductGrid }       from './product-grid'
-import type { ProductListItem, PaginatedProducts } from '@/services/catalog.service'
+import type { PaginatedProducts, StoreListItem } from '@/services/catalog.service'
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -23,11 +23,6 @@ interface Category {
 
 export type SortOption = 'newest' | 'price_asc' | 'price_desc' | 'featured'
 
-export interface StoreListItem {
-  id: string
-  name: string
-  slug: string
-}
 
 interface CatalogPageProps {
   searchParams: {
