@@ -7,6 +7,7 @@ import { CartList } from '@/components/cart/cart-list'
 import { CartSummary } from '@/components/cart/cart-summary'
 import { CartEmptyState } from '@/components/cart/cart-empty-state'
 import { ProductGridSkeleton } from '@/components/catalog/product-card-skeleton'
+import { CurrentStoreBridge } from '@/components/layout/current-store-bridge'
 
 export default function CartPage() {
   const { user, loading: authLoading } = useAuth()
@@ -33,8 +34,11 @@ export default function CartPage() {
 
   const storeName = (cart as any)?.stores?.name as string | undefined
 
+  const headerStore = (cart as any)?.stores ? { id: (cart as any).stores.id, name: (cart as any).stores.name, slug: (cart as any).stores.slug } : null
+
   return (
     <div dir="rtl" className="min-h-screen bg-stone-50">
+      <CurrentStoreBridge store={headerStore} />
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-stone-900">سلة التسوق</h1>
